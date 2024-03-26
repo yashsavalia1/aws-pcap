@@ -1,0 +1,4 @@
+python-dotenv
+simplefix
+requests
+python-socketio[client]
