@@ -121,6 +121,7 @@ class ThreadedServer(object):
 if __name__ == "__main__":
     load_dotenv()
     PORT = int(os.getenv('EXCHANGE_PORT'))
-    ThreadedServer('',PORT).listen()
+    print('Starting exchange server on port {}'.format(PORT))
+    ThreadedServer('0.0.0.0',PORT).listen()
 
 

@@ -4,12 +4,12 @@ import asyncio
 import websockets
 import requests
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 import random
 
 class VanillaClient(Client):
     def __init__(self, df_hostname, df_port, or_hostname, or_port):
-        self.d_hostname = df_hostname
+        self.df_hostname = df_hostname
         self.df_port = df_port
         self.or_hostname = or_hostname
         self.or_port = or_port
@@ -28,7 +28,7 @@ class VanillaClient(Client):
             "type": "buy",
             "amount": "100",
             "id": json.loads(msg)["id"],
-            "timestamp": datetime.now(datetime.UTC).isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
         headers = {'Content-Type': 'application/json'}
         return (headers, data)
@@ -48,6 +48,7 @@ class VanillaClient(Client):
             while True:
                 msg = await self.recv_message(websocket)
                 if random.randint(1, 5) == 1:
+                    print("Sending order...")
                     self.send_response(msg)
 
     def run(self):

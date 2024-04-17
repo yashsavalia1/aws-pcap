@@ -65,7 +65,5 @@ if __name__ == '__main__':
     BASE_IP = os.getenv('EXCHANGE_BASE_IP')
     OCLET = os.getenv('EXCHANGE_START_OCTET')
 
-    NUM_EXCHANGES = int(os.getenv('NUM_EXCHANGES'))
-    for i in range(NUM_EXCHANGES):
-        thread = threading.Thread(target=connect_and_handle_gw, args=(BASE_IP + str(int(OCLET) + i), PORT,))
-        thread.start()
+    thread = threading.Thread(target=connect_and_handle_gw, args=(BASE_IP, PORT,))
+    thread.start()
