@@ -1,0 +1,9 @@
+Flask
+numpy
+python-dotenv
+Requests
+scipy
+simplefix
+sslkeylog
+urllib3
+websockets
