@@ -1,30 +1,38 @@
 import Image from "next/image";
 import logo from "../assets/logo-circle.png";
+import Link from "next/link";
 
 export default function Sidebar() {
   return (
     <aside className="sidebar h-full sidebar-fixed-left justify-start">
       <section className="sidebar-title items-center p-4">
         <div className="mr-4">
-          <Image src={logo.src} height={50} width={50} alt=""/>
+          <Image src={logo.src} height={50} width={50} alt="" />
         </div>
         <div className="flex flex-col">
           <span>AWS Packet Capturing</span>
           <span className="text-xs font-normal text-content2">Group 4</span>
         </div>
       </section>
+      <hr className="mx-4" />
       <section className="sidebar-content h-fit min-h-[20rem] overflow-visible">
         <nav className="menu rounded-md">
           <section className="menu-section px-4">
             <ul className="menu-items">
-              <li className="menu-item">
-                <span>General</span>
-              </li>
+              <Link href="./">
+                <li className="menu-item">Home</li>
+              </Link>
+              <Link href="./latency-analytics">
+                <li className="menu-item">Latency Analytics</li>
+              </Link>
+              <Link href="./packet-explorer">
+                <li className="menu-item">Packet Explorer</li>
+              </Link>
 
-              <li className="menu-item">
-                <span>Teams</span>
-              </li>
-              <li className="menu-item">
+              <Link href="./order-explorer">
+                <li className="menu-item">Order Explorer</li>
+              </Link>
+              {/* <li className="menu-item">
                 <span>Billing</span>
               </li>
               <li>
@@ -61,53 +69,10 @@ export default function Sidebar() {
                     <label className="menu-item ml-6">Integrations</label>
                   </div>
                 </div>
-              </li>
+              </li> */}
             </ul>
           </section>
         </nav>
-      </section>
-      <section className="sidebar-footer h-full justify-end bg-gray-2 pt-2">
-        <div className="divider my-0"></div>
-        <div className="dropdown z-50 flex h-fit w-full cursor-pointer hover:bg-gray-4">
-          <label
-            className="whites mx-2 flex h-fit w-full cursor-pointer p-0 hover:bg-gray-4"
-            tabIndex={0}
-          >
-            <div className="flex flex-row gap-4 p-4">
-              <div className="avatar avatar-md">
-                <img src="https://i.pravatar.cc/150?img=30" alt="avatar" />
-              </div>
-
-              <div className="flex flex-col">
-                <span>Sandra Marx</span>
-                <span className="text-xs font-normal text-content2">
-                  sandra
-                </span>
-              </div>
-            </div>
-          </label>
-          <div className="dropdown-menu dropdown-menu-right-top ml-2">
-            <a className="dropdown-item text-sm">Profile</a>
-            <a tabIndex={-1} className="dropdown-item text-sm">
-              Account settings
-            </a>
-            <a tabIndex={-1} className="dropdown-item text-sm">
-              Change email
-            </a>
-            <a tabIndex={-1} className="dropdown-item text-sm">
-              Subscriptions
-            </a>
-            <a tabIndex={-1} className="dropdown-item text-sm">
-              Change password
-            </a>
-            <a tabIndex={-1} className="dropdown-item text-sm">
-              Refer a friend
-            </a>
-            <a tabIndex={-1} className="dropdown-item text-sm">
-              Settings
-            </a>
-          </div>
-        </div>
       </section>
     </aside>
   );
