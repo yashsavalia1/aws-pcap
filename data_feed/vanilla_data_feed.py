@@ -25,10 +25,14 @@ class VanillaDataFeedServer():
 
     def generate_data(self):
         stock_symbols = ['AAPL', 'GOOG', 'MSFT', 'AMZN', 'FB']
+        stock_prices = [170, 165, 395, 179, 439]
+        random_choice = random.randint(0, 4)
+        price_range = stats.norm(stock_prices[random_choice], 0.01 * stock_prices[random_choice])
+        price = price_range.rvs()
         data = {
             'id': str(uuid4()),
-            'symbol': random.choice(stock_symbols),
-            'price': round(random.uniform(100, 500), 2),
+            'symbol': stock_symbols[random_choice],
+            'price': round(price, 2),
             'timestamp': datetime.now(timezone.utc).isoformat()
         }
         return data
