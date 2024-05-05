@@ -24,13 +24,16 @@ router.ws("/api/ws", async (ws, req) => {
     setInterval(() => {
         console.log("Sending data");
         const db = new sqlite3.Database("./prisma/database.db");
-        db.all("SELECT * FROM TCPPacket ORDER BY time DESC LIMIT 1", (err, rows) => {
+        db.all<{ timestamp: number }>("SELECT * FROM TCPPacket ORDER BY timestamp DESC LIMIT 1", (err, rows) => {
             if (err) {
                 console.error(err);
                 return;
             }
             rows.forEach((row) => {
-                ws.send(JSON.stringify(row));
+                if (row.timestamp > latestTime) {
+                    latestTime = row.timestamp;
+                    ws.send(JSON.stringify(row));
+                }
             });
         });
         db.close();
