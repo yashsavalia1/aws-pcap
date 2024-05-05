@@ -28,12 +28,13 @@ router.ws("/api/ws", async (ws, req) => {
                 console.error(err);
                 return;
             }
-            rows.forEach((row) => {
+            for (let i = rows.length - 1; i >= 0; i--) {
+                const row = rows[i];
                 if (row.timestamp > latestTime) {
                     latestTime = row.timestamp;
                     ws.send(JSON.stringify(row));
                 }
-            });
+            }
         });
         db.close();
     }, 200);
