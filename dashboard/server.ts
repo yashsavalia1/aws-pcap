@@ -20,18 +20,19 @@ const router = express.Router() as expressWs.Router;
 
 router.ws("/api/ws", async (ws, req) => {
 
-    let latestPrice = 0;
+    let latestTime = 0;
     setInterval(() => {
         const db = new sqlite3.Database("./prisma/database.db");
-        db.all<{ price: number }>("SELECT * FROM trades ORDER BY time DESC LIMIT 1", (err, rows) => {
+        db.all<{ timestamp: number }>("SELECT * FROM TCPPacket ORDER BY time DESC LIMIT 1", (err, rows) => {
             if (err) {
                 console.error(err);
                 return;
             }
             rows.forEach((row) => {
-                if (latestPrice === row["price"]) return;
-                ws.send(JSON.stringify(row["price"]));
-                latestPrice = row["price"];
+                if (row.timestamp > latestTime) {
+                    latestTime = row.timestamp;
+                    ws.send(JSON.stringify(row));
+                }
             });
         });
         db.close();
