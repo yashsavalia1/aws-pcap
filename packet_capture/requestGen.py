@@ -56,6 +56,8 @@ async def start_capture():
         try:
             for line in p.stdout:
                 data = json.loads(line)
+                if type(data) != dict:
+                    continue
                 conn = sqlite3.connect("../dashboard/prisma/database.db")
                 cursor = conn.cursor()
                 cursor.execute(

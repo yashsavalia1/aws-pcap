@@ -7,8 +7,6 @@ import expressWs from "express-ws"
 import sqlite3 from "sqlite3";
 import exec from "child_process";
 
-
-
 const app = express();
 expressWs(app);
 const router = express.Router() as expressWs.Router;
@@ -36,7 +34,7 @@ router.ws("/api/ws", async (ws, req) => {
                 latestPrice = row["price"];
             });
         });
-	db.close();
+        db.close();
     }, 200);
 
     ws.on("message", async (msg) => {
