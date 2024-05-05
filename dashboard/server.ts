@@ -22,9 +22,8 @@ router.ws("/api/ws", async (ws, req) => {
 
     let latestTime = 0;
     setInterval(() => {
-        console.log("Sending data");
         const db = new sqlite3.Database("./prisma/database.db");
-        db.all<{ timestamp: number }>("SELECT * FROM TCPPacket ORDER BY timestamp DESC LIMIT 1", (err, rows) => {
+        db.all<{ timestamp: number }>("SELECT * FROM TCPPacket ORDER BY timestamp DESC LIMIT 50", (err, rows) => {
             if (err) {
                 console.error(err);
                 return;
