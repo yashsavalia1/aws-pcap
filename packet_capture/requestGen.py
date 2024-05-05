@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-conn = sqlite3.connect("../dashboard-3/prisma/database.db")
+conn = sqlite3.connect("../dashboard/prisma/database.db")
 cursor = conn.cursor()
 
 cursor.execute("DROP TABLE IF EXISTS TCPPacket")
