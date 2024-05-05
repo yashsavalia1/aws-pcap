@@ -5,7 +5,7 @@ CloudPCap
 
 ## Description
 
-CloudPCap is a packet-capture software that is desigend to work in cloud environments. Specifically, we set up the packet-capture software using AWS ec2 and AWS Traffic Mirroring. 
+CloudP🧢 is a packet-capture software that is desigend to work in cloud environments. Specifically, we set up the packet-capture software using AWS ec2 and AWS Traffic Mirroring. 
 
 In algorithmic / high frequency trading, algorithms will oftentimes be set up to trade once certain indicators are met. This means that the tick-to-trade time is crucial. In other words, it is very important for traders to enter trades as quickly as possible upon receiving relevant market data. Traders can analyze their tick-to-trade time by tracking their incoming and outgoing packets using ```tcpdump```. Many trading shops and firms are able to spend thousands on expensive hardware, data feeds, etc, allowing them to efficiently trade (and analyze incoming / outgoing packets). 
 
