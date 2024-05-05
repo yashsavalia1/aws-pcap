@@ -2,7 +2,7 @@ import express from "express";
 import type { Express } from "express";
 import ViteExpress from "vite-express";
 import { AddressInfo } from "net";
-import { PrismaClient } from "@prisma/client";
+//import { PrismaClient } from "@prisma/client";
 import expressWs from "express-ws"
 import sqlite3 from "sqlite3";
 import exec from "child_process";
@@ -13,12 +13,12 @@ const app = express();
 expressWs(app);
 const router = express.Router() as expressWs.Router;
 
-const prisma = new PrismaClient();
+// const prisma = new PrismaClient();
 
-router.get("/api/packet", async (req, res) => {
-    const packets = await prisma.tCPPacket.findMany();
-    res.json(packets);
-});
+// router.get("/api/packet", async (req, res) => {
+//    const packets = await prisma.tCPPacket.findMany();
+//    res.json(packets);
+//});
 
 router.ws("/api/ws", async (ws, req) => {
 
@@ -36,6 +36,7 @@ router.ws("/api/ws", async (ws, req) => {
                 latestPrice = row["price"];
             });
         });
+	db.close();
     }, 200);
 
     ws.on("message", async (msg) => {
@@ -45,7 +46,7 @@ router.ws("/api/ws", async (ws, req) => {
 
 app.use(router);
 
-const server = app.listen(3000, "0.0.0.0", () => {
+const server = app.listen(80, "0.0.0.0", () => {
     const { address, port } = server.address() as AddressInfo;
     console.log(`Server running on http://localhost:${port}`);
 });
