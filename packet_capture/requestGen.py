@@ -64,8 +64,8 @@ async def start_capture():
                     "INSERT INTO TCPPacket (timestamp, source, destination, length, data) VALUES (?, ?, ?, ?, ?)",
                     (
                         data["tstamp_sec"],
-                        convert_to_ip(data["ip_src_ip"]),
-                        convert_to_ip(data["ip_dst_ip"]),
+                        convert_to_ip(data['raw_data']["ip_src_ip"]),
+                        convert_to_ip(data['raw_data']["ip_dst_ip"]),
                         data["capture_length"],
                         data["raw_data"]["rawhex"],
                     ),
