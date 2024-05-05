@@ -6,6 +6,7 @@ import { AddressInfo } from "net";
 import expressWs from "express-ws"
 import sqlite3 from "sqlite3";
 import exec from "child_process";
+import ws from "ws";
 
 const app = express();
 expressWs(app);
@@ -18,22 +19,20 @@ const router = express.Router() as expressWs.Router;
 //    res.json(packets);
 //});
 
-router.ws("/api/ws", async (ws, req) => {
+router.ws("/api/ws", async (ws: ws.WebSocket, req) => {
 
-    let latestTime = 0;
+    let latestTimestamp = 0;
     setInterval(() => {
         const db = new sqlite3.Database("./prisma/database.db");
-        db.all<{ timestamp: number }>("SELECT * FROM TCPPacket ORDER BY timestamp DESC LIMIT 50", (err, rows) => {
+        db.all<{ timestamp: number }>("SELECT * FROM TCPPacket WHERE timestamp > ? ORDER BY timestamp DESC LIMIT 50", [latestTimestamp], (err, rows) => {
             if (err) {
                 console.error(err);
                 return;
             }
             for (let i = rows.length - 1; i >= 0; i--) {
                 const row = rows[i];
-                if (row.timestamp > latestTime) {
-                    latestTime = row.timestamp;
-                    ws.send(JSON.stringify(row));
-                }
+                ws.send(JSON.stringify(row));
+                latestTimestamp = row.timestamp;
             }
         });
         db.close();
