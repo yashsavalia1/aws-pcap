@@ -1,12 +1,8 @@
-import Image from "next/image";
-import { Inter } from "next/font/google";
-import Layout from "@/components/Layout";
-
-const inter = Inter({ subsets: ["latin"] });
+import Layout from "../components/Layout";
 
 export default function PacketExplorer() {
   return (
-    <div className={inter.className}>
+    <div>
       <title>AWS Packet Capturing | Packet Explorer</title>
       <Layout>
         <div className="h-screen p-6 flex flex-col gap-5">
@@ -52,8 +48,8 @@ export default function PacketExplorer() {
             </div>
           </div>
           <div className="h-1/3 flex justify-stretch gap-5">
-              <div className="card h-full w-full max-w-full p-6">hi</div>
-              <div className="card h-full w-full max-w-full p-6">hi</div>
+            <div className="card h-full w-full max-w-full p-6">hi</div>
+            <div className="card h-full w-full max-w-full p-6">hi</div>
           </div>
         </div>
       </Layout>

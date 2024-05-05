@@ -1,12 +1,8 @@
-import Image from "next/image";
-import { Inter } from "next/font/google";
-import Layout from "@/components/Layout";
-
-const inter = Inter({ subsets: ["latin"] });
+import Layout from "../components/Layout";
 
 export default function OrderExplorer() {
   return (
-    <div className={inter.className}>
+    <div>
       <title>AWS Packet Capturing | Order Explorer</title>
       <Layout>
         <div className="h-screen p-6 flex flex-col gap-4">

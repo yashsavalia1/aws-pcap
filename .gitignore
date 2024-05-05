@@ -2,5 +2,3 @@ __pycache__/
 node_modules/
 .env
 .gitignore
-package.json
-package-lock.json

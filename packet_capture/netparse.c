@@ -23,7 +23,7 @@ int parsePacket(const int printJson, const struct pcap_pkthdr *header,
                 fix_payload_t *fix) {
 
     printf("{\"tstamp_sec\": "
-           "\"%ld\",\"tstamp_nano\":\"%d\",\"capture_length\":\"%d\",\"total_"
+           "\"%ld\",\"tstamp_nano\":\"%ld\",\"capture_length\":\"%d\",\"total_"
            "length\":\"%d\",\"raw_data\":{\"rawhex\":\"",
            header->ts.tv_sec, header->ts.tv_usec, header->caplen, header->len);
 

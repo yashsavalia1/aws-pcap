@@ -1,13 +1,11 @@
-import Image from "next/image";
 import logo from "../assets/logo-circle.png";
-import Link from "next/link";
 
 export default function Sidebar() {
   return (
     <aside className="sidebar h-full sidebar-fixed-left justify-start">
       <section className="sidebar-title items-center p-4">
         <div className="mr-4">
-          <Image src={logo.src} height={50} width={50} alt="" />
+          <img src={logo} height={50} width={50} alt="" />
         </div>
         <div className="flex flex-col">
           <span>AWS Packet Capturing</span>
@@ -19,19 +17,19 @@ export default function Sidebar() {
         <nav className="menu rounded-md">
           <section className="menu-section px-4">
             <ul className="menu-items">
-              <Link href="./">
+              <a href="./">
                 <li className="menu-item">Home</li>
-              </Link>
-              <Link href="./latency-analytics">
+              </a>
+              <a href="./latency-analytics">
                 <li className="menu-item">Latency Analytics</li>
-              </Link>
-              <Link href="./packet-explorer">
+              </a>
+              <a href="./packet-explorer">
                 <li className="menu-item">Packet Explorer</li>
-              </Link>
+              </a>
 
-              <Link href="./order-explorer">
+              <a href="./order-explorer">
                 <li className="menu-item">Order Explorer</li>
-              </Link>
+              </a>
               {/* <li className="menu-item">
                 <span>Billing</span>
               </li>

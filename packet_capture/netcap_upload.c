@@ -25,6 +25,7 @@ void packet_handler(u_char *fileDumper, const struct pcap_pkthdr *header,
                 &fixInfo);
 
     printf("}}\n");
+    fflush(stdout);
     //  printf("Packet at %lu.%lu - Capture length: %d, Total length: %d\n",
     //         header->ts.tv_sec, header->ts.tv_usec, header->caplen,
     //         header->len);
