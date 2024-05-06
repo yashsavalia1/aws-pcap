@@ -18,7 +18,9 @@
     "react-dom": "^18.2.0",
     "react-helmet": "^6.1.0",
     "react-router-dom": "^6.23.0",
+    "react-use-websocket": "^4.8.1",
     "rippleui": "^1.12.1",
+    "set-interval-async": "^3.0.3",
     "socket.io": "^4.7.5",
     "sqlite3": "^5.1.7",
     "vite-express": "^0.16.0"

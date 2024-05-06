@@ -5,12 +5,20 @@ import { AddressInfo } from "net";
 //import { PrismaClient } from "@prisma/client";
 import expressWs from "express-ws"
 import sqlite3 from "sqlite3";
-import exec from "child_process";
+import { exec } from "child_process";
 import ws from "ws";
+import { setIntervalAsync, clearIntervalAsync } from "set-interval-async";
+import { Packet } from "./types/Packet";
 
 const app = express();
 expressWs(app);
 const router = express.Router() as expressWs.Router;
+
+exec("sudo python3 ./packet_capture/requestGen.py", (error, stdout, stderr) => {
+    if (error) {
+        console.error(`Error executing command: ${error.message}`);
+    }
+});
 
 // const prisma = new PrismaClient();
 
@@ -20,25 +28,32 @@ const router = express.Router() as expressWs.Router;
 //});
 
 router.ws("/api/ws", async (ws: ws.WebSocket, req) => {
-
-    let latestTimestamp = 0;
-    setInterval(() => {
+    console.log("Websocket connection established");
+    let latestID = 0;
+    const interval = setIntervalAsync(async () => {
         const db = new sqlite3.Database("./prisma/database.db");
-        db.all<{ timestamp: number }>("SELECT * FROM TCPPacket WHERE timestamp > ? ORDER BY timestamp DESC LIMIT 50", [latestTimestamp], (err, rows) => {
-            if (err) {
-                console.error(err);
-                return;
-            }
-            for (let i = rows.length - 1; i >= 0; i--) {
-                const row = rows[i];
-                ws.send(JSON.stringify(row));
-                latestTimestamp = row.timestamp;
-            }
-        });
-        db.close();
-    }, 200);
+        await new Promise<void>((resolve, reject) => {
+            db.all<Packet>("SELECT * FROM TCPPacket WHERE id > ? ORDER BY id DESC LIMIT 50", [latestID], (err, rows) => {
+                if (err) {
+                    console.error(err);
+                    reject(err);
+                    return;
+                }
+                if (rows.length > 0) {
+                    ws.send(JSON.stringify(rows));
+                    latestID = rows[0].id;
+                }
+                resolve();
+            });
 
-    ws.on("message", async (msg) => {
+        }).catch(() => {
+            clearIntervalAsync(interval);
+            ws.close()
+        });
+    }, 500);
+
+    ws.on("close", () => clearIntervalAsync(interval));
+    ws.on("message", (msg) => {
         ws.send(msg);
     });
 });

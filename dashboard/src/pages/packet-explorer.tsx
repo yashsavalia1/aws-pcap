@@ -1,6 +1,20 @@
+import { useEffect, useState } from "react";
 import Layout from "../components/Layout";
+import useWebSocket from "react-use-websocket";
+import { Packet } from "../../types/Packet";
 
 export default function PacketExplorer() {
+
+  const [packets, setPackets] = useState<Packet[]>([]);
+
+  const { lastJsonMessage } = useWebSocket<Packet[]>("ws://localhost/api/ws")
+
+  useEffect(() => {
+    if (lastJsonMessage) {
+      setPackets((prevPackets) => [...lastJsonMessage, ...prevPackets]);
+    }
+  }, [lastJsonMessage]);
+
   return (
     <div>
       <title>AWS Packet Capturing | Packet Explorer</title>
@@ -31,17 +45,19 @@ export default function PacketExplorer() {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
-                      <th>1</th>
-                      <td>Cy Ganderton</td>
-                      <td>Quality Control Specialist</td>
-                      <td>Blue</td>
-                      <td>Blue</td>
-                      <td>Blue</td>
-                      <td>Blue</td>
-                      <td>Blue</td>
-                      <td>Blue</td>
-                    </tr>
+                    {packets.map((packet) => (
+                      <tr key={packet.id}>
+                        <td>{packet.id}</td>
+                        <td>{packet.timestamp}</td>
+                        <td>{packet.length}</td>
+                        <td>{packet.source}</td>
+                        <td>{packet.destination}</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
