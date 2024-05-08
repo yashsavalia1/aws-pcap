@@ -8,6 +8,9 @@ import signal
 from subprocess import Popen, PIPE, STDOUT
 from dotenv import load_dotenv
 import os
+import pyshark
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.backends import default_backend
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -63,6 +66,15 @@ async def start_capture():
                 data = json.loads(line)
                 if type(data) != dict:
                     continue
+
+                if int(data["raw_data"]["ip_protocol"]) == 56: # 0x38 = 56 (TLSP)
+                    tls_payload = data["raw_data"]["rawhex"]
+                    key = open('~/ssl_key.log', 'r').read()
+                    backend = default_backend()
+                    cipher = Cipher(algorithms.AES(key), modes.CBC(bytes.fromhex(tls_payload)), backend=backend)
+                    decryptor = cipher.decryptor()
+                    decrypted_payload = decryptor.update(bytes.fromhex(tls_payload)) + decryptor.finalize()
+
                 conn = sqlite3.connect(os.path.join(dir_path, "../prisma/database.db"))
                 cursor = conn.cursor()
                 cursor.execute(
@@ -72,7 +84,7 @@ async def start_capture():
                         convert_to_ip(data['raw_data']["ip_src_ip"]),
                         convert_to_ip(data['raw_data']["ip_dst_ip"]),
                         data["capture_length"],
-                        data["raw_data"]["rawhex"],
+                        decrypted_payload.hex(),
                     ),
                 )
                 conn.commit()
