@@ -21,6 +21,11 @@ int parsePacket(const int printJson, const struct pcap_pkthdr *header,
                 const u_char *packet, linux_linklayer_sll_t *linklayer,
                 ip_header_t *ip, tcp_header_t *tcp, udp_header_t *udp,
                 fix_payload_t *fix) {
+    
+    linklayer -> lsll_proto = (u_short)parseValue(packet + 14, 2);
+    if (linklayer -> lsll_proto != 0x0800) {
+        return -1;
+    }
 
     printf("{\"tstamp_sec\": "
            "\"%ld\",\"tstamp_nano\":\"%ld\",\"capture_length\":\"%d\",\"total_"
@@ -62,13 +67,13 @@ int parsePacket(const int printJson, const struct pcap_pkthdr *header,
 
     switch (linklayer->lsll_proto) { /* Check packet type */
     case 0x0800:                     /* Ethernet */
-        // printf("This is an ethernet packet\n");
+        printf("This is an ethernet packet\n");
         break;
     case 0x0806: /*ARP*/
-        // printf("This is an ARP packet\n");
+        printf("This is an ARP packet\n");
         return 0;
     default: /* Anything else */
-        // printf("This is an not an unknown packet\n");
+        printf("This is an unknown packet\n");
         return -1;
     }
 
@@ -84,7 +89,7 @@ int parsePacket(const int printJson, const struct pcap_pkthdr *header,
     ip->ip_sum = (u_short)parseValue(ip_pointer + 10, 2);
     ip->ip_src = (u_int)parseValue(ip_pointer + 12, 4);
     ip->ip_dst = (u_int)parseValue(ip_pointer + 16, 4);
-
+    
     if (printJson) {
         printf(",\"ip_version\":\"%d\",\"ip_header_length\":\"%d\",\"ip_"
                "type_of_"

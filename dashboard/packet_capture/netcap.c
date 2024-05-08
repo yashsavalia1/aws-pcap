@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#include <string.h>
+#include "netparse.h"
 
 pcap_t *handle;
 
@@ -192,4 +194,31 @@ void sigintHandler(int sig) {
     signal(sig, SIG_IGN);
     printf("\nSIGINT - Breaking loop\n");
     pcap_breakloop(handle);
+}
+
+int main(int argc, char **argv) {
+    capture(packet_handler);
+    return 0;
+}
+
+void packet_handler(u_char *fileDumper, const struct pcap_pkthdr *header,
+                    const u_char *body) {
+
+    // pcap_dump(fileDumper, header, body);
+    linux_linklayer_sll_t linkLayerInfo = {};
+    ip_header_t ipInfo = {};
+    tcp_header_t tcpInfo = {};
+    udp_header_t udpInfo = {};
+    char fix_unrecognised[1024];
+    fix_payload_t fixInfo = {.unrecognised = fix_unrecognised};
+
+    int result = parsePacket(1, header, body, &linkLayerInfo, &ipInfo, &tcpInfo, &udpInfo,
+                &fixInfo);
+    if (result != -1){
+        printf("}}\n");
+    }
+    fflush(stdout);
+    //  printf("Packet at %lu.%lu - Capture length: %d, Total length: %d\n",
+    //         header->ts.tv_sec, header->ts.tv_usec, header->caplen,
+    //         header->len);
 }
