@@ -22,10 +22,10 @@ int parsePacket(const int printJson, const struct pcap_pkthdr *header,
                 ip_header_t *ip, tcp_header_t *tcp, udp_header_t *udp,
                 fix_payload_t *fix) {
     
-    linklayer -> lsll_proto = (u_short)parseValue(packet + 14, 2);
-    if (linklayer -> lsll_proto != 0x0800) {
-        return -1;
-    }
+    // linklayer -> lsll_proto = (u_short)parseValue(packet + 14, 2);
+    // if (linklayer -> lsll_proto != 0x0800) {
+    //     return -1;
+    // }
 
     printf("{\"tstamp_sec\": "
            "\"%ld\",\"tstamp_nano\":\"%ld\",\"capture_length\":\"%d\",\"total_"

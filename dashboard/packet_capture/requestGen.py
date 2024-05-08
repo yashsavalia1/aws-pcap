@@ -54,7 +54,7 @@ def convert_to_ip(hexStr):
 
 async def start_capture():
     with Popen(
-        os.path.join(dir_path, "./netcap_upload"),
+        os.path.join(dir_path, "./netcap"),
         shell=True,
         stdin=PIPE,
         stdout=PIPE,
@@ -66,7 +66,7 @@ async def start_capture():
                 data = json.loads(line)
                 if type(data) != dict:
                     continue
-
+                payload = data["raw_data"]["rawhex"]
                 if int(data["raw_data"]["ip_protocol"]) == 56: # 0x38 = 56 (TLSP)
                     tls_payload = data["raw_data"]["rawhex"]
                     key = open('~/ssl_key.log', 'r').read()
@@ -74,7 +74,8 @@ async def start_capture():
                     cipher = Cipher(algorithms.AES(key), modes.CBC(bytes.fromhex(tls_payload)), backend=backend)
                     decryptor = cipher.decryptor()
                     decrypted_payload = decryptor.update(bytes.fromhex(tls_payload)) + decryptor.finalize()
-
+                    payload = decrypted_payload.hex()
+                
                 conn = sqlite3.connect(os.path.join(dir_path, "../prisma/database.db"))
                 cursor = conn.cursor()
                 cursor.execute(
@@ -84,7 +85,7 @@ async def start_capture():
                         convert_to_ip(data['raw_data']["ip_src_ip"]),
                         convert_to_ip(data['raw_data']["ip_dst_ip"]),
                         data["capture_length"],
-                        decrypted_payload.hex(),
+                        payload,
                     ),
                 )
                 conn.commit()
