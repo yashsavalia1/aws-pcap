@@ -1,0 +1,1 @@
+python ~/data_feed/main.py $1 $2

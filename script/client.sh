@@ -1,0 +1,1 @@
+python ~/client/main.py $1
