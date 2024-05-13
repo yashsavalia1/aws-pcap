@@ -1,0 +1,20 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "go run github.com/steebchen/prisma-client-go"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:database.db"
+}
+
+model TCPPacket {
+  id        Int      @id @default(autoincrement())
+  timestamp DateTime
+  source    String
+  destination String
+  length    Int
+  data      String
+}
