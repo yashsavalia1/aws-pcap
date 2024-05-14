@@ -143,19 +143,19 @@ func handleWebSocketConnection(c echo.Context) error {
 
 func capturePackets() {
 	// get device for windows
-	ifs, _ := pcap.FindAllDevs()
-	var dev string
-	//var devices []string
-	for _, i := range ifs {
-		//devices = append(devices, i.Description)
-		if i.Description == "Intel(R) Wi-Fi 6 AX201 160MHz" {
-			dev = i.Name
-			break
-		}
-	}
+	// ifs, _ := pcap.FindAllDevs()
+	// var dev string
+	// //var devices []string
+	// for _, i := range ifs {
+	// 	//devices = append(devices, i.Description)
+	// 	if i.Description == "Intel(R) Wi-Fi 6 AX201 160MHz" {
+	// 		dev = i.Name
+	// 		break
+	// 	}
+	// }
 	//dev = getDevice()
 	// open device
-	handle, err := pcap.OpenLive(dev, 65535, false, pcap.BlockForever)
+	handle, err := pcap.OpenLive("eth0", 65535, false, pcap.BlockForever)
 	if err != nil {
 		panic(err)
 	}
