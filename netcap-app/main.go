@@ -164,7 +164,7 @@ func capturePackets() {
 	}
 	packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
 
-	handleSignalInterrupt(handle)
+	//handleSignalInterrupt(handle)
 
 	// open pcap file
 	f, _ := os.Create("test.pcap")
