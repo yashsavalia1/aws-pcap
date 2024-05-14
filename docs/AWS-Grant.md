@@ -1,0 +1,3 @@
+# AWS Grant
+
+We are students at the University of Illinois Urbana-Champaign. We are taking IE 421 (High Frequency Trading Technology) with Professor Lariviere. Our project entails creating an efficient and complex packet capture system built using AWS. We are requesting a grant for AWS technology that will allow us to continue developing the project (while builidng in AWS), and add more complexity to the project (such as more instances), without worrying about costs.  
