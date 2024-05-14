@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Layout from "../components/Layout";
 import useWebSocket from "react-use-websocket";
 import { Packet } from "../../types/Packet";
+import HexViewer from "../components/HexViewer";
 
 export default function PacketExplorer() {
 
@@ -20,8 +21,19 @@ export default function PacketExplorer() {
     <div>
       <title>AWS Packet Capturing | Packet Explorer</title>
       <Layout>
-        <div className="h-screen p-6 flex flex-col gap-5 max-w-[100%-18rem]">
-          <div className="card h-2/3 max-w-full p-6">
+        <input className="modal-state" id="modal-1" type="checkbox" />
+        <div className="modal">
+          <label className="modal-overlay" htmlFor="modal-1"></label>
+          <div className="modal-content max-w-full flex flex-col gap-5">
+            <label htmlFor="modal-1" className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</label>
+            <div className="p-5">
+              <HexViewer data={selectedPacket?.data || ""} />
+            </div>
+          </div>
+        </div>
+        
+        <div className="h-screen p-6 flex flex-col gap-5">
+          <div className="card h-full max-w-full p-6">
             <div className="w-full h-full flex flex-col items-center gap-4">
               <div className="w-full self-start">
                 <div className="font-bold">Network Traffic</div>
@@ -31,7 +43,7 @@ export default function PacketExplorer() {
                 </span>
               </div>
               <div className="flex w-full overflow-x-auto">
-                <table className="table">
+                <table className="table table-compact over">
                   <thead>
                     <tr>
                       <th>Packet ID</th>
@@ -47,7 +59,14 @@ export default function PacketExplorer() {
                   </thead>
                   <tbody>
                     {packets.map((packet, i) => (
-                      <tr key={i} onClick={() => setSelectedPacket(packet)} className="hover:bg-gray-700 cursor-pointer">
+                      <tr
+                        key={i}
+                        onClick={() => {
+                          setSelectedPacket(packet)
+                          document.getElementById("modal-1")?.click()
+                        }}
+                        className="hover:bg-gray-700 cursor-pointer"
+                      >
                         <td>{i}</td>
                         <td>{packet.timestamp}</td>
                         <td>{packet.length}</td>
@@ -64,25 +83,8 @@ export default function PacketExplorer() {
               </div>
             </div>
           </div>
-          <div className="h-1/3 flex max-w-full gap-5">
-            <div className="card max-w-full h-full w-1/2 p-6">
-              {selectedPacket && (
-                <>
-                  <div className="font-bold">Packet Details</div>
-                  <div>
-                    <div className="font-bold">Data:</div>
-                    <div className="break-all overflow-clip h-48">{selectedPacket.data}</div>
-                  </div>
-                </>
-              )
-              }
-
-
-            </div>
-            <div className="card max-w-full h-full w-1/2 p-6">hi</div>
-          </div>
         </div>
-      </Layout>
-    </div>
+      </Layout >
+    </div >
   );
 }

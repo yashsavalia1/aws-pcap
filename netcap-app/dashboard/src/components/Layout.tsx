@@ -6,7 +6,7 @@ const Layout: React.FC<React.PropsWithChildren> = ({ children }) => {
       <div className="w-full max-w-[18rem]">
         <Sidebar />
       </div>
-      <main className="flex flex-col w-full max-w-[100%-18rem]">{children}</main>
+      <main className="flex flex-col w-full max-w-[calc(100%-18rem)]">{children}</main>
     </div>
   );
 };

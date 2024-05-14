@@ -2,6 +2,8 @@ package main
 
 import (
 	"database/sql"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -19,12 +21,18 @@ import (
 	"gitlab.engr.illinois.edu/ie421_high_frequency_trading_spring_2024/ie421_hft_spring_2024_group_02/group_02_project/netcap-app/dashboard"
 )
 
+type ByteSlice []byte
+
+func (b ByteSlice) MarshalJSON() ([]byte, error) {
+	return json.Marshal(hex.EncodeToString(b))
+}
+
 type TCPPacket struct {
-	Timestamp   string `json:"timestamp"`
-	Source      string `json:"source"`
-	Destination string `json:"destination"`
-	Length      int    `json:"length"`
-	Data        []byte `json:"data"`
+	Timestamp   string    `json:"timestamp"`
+	Source      string    `json:"source"`
+	Destination string    `json:"destination"`
+	Length      int       `json:"length"`
+	Data        ByteSlice `json:"data"`
 }
 
 var (
@@ -151,7 +159,7 @@ func capturePackets() {
 	if err != nil {
 		panic(err)
 	}
-	if err := handle.SetBPFFilter("tcp and port 80" /* "not (arp or (ip proto \\icmp) or (port 123) or (port 22))" */); err != nil {
+	if err := handle.SetBPFFilter("tcp and port 8001"); err != nil {
 		panic(err)
 	}
 	packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
