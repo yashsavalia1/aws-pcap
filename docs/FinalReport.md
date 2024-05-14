@@ -145,6 +145,7 @@ Our next steps are as follows:
 - Use machine learning and statistical modeling when analyzing latency. 
 - Add more functionality for charting on the front-end. 
 - Add functionality for users to test/backtest algorithms, and deploy them real time. 
+- Containerize the entire system.
 
 ## 6. Project Reflections
 
