@@ -1,4 +1,5 @@
 import { createBrowserRouter } from "react-router-dom";
+import NotFound from "../pages/404";
 
 export default function PageRouter() {
   const pages = import.meta.glob("../pages/**/*.tsx", { eager: true });
@@ -20,7 +21,7 @@ export default function PageRouter() {
       Element: (pages[path] as any).default,
       loader: (pages[path] as any)?.loader,
       action: (pages[path] as any)?.action,
-      ErrorBoundary: (pages[path] as any)?.ErrorBoundary,
+      ErrorBoundary: NotFound,
     });
   }
 
