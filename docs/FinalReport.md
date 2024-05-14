@@ -109,6 +109,31 @@ The monitoring server accepts the packets and decodes them. It takes the receivi
 
 [Link to the demonstration]()
 
+### 4.4 Project Breakdown:
+
+Areet:
+- Created python HTTP and Websocket servers. 
+- Added encryption to servers. 
+- Created C scripts for packet capture and parsing. 
+- Added packet decrpytion. 
+
+Yash:
+- Spearheaded front-end design.
+- Spearheaded conversion of packet capture and servers to Go. 
+- Worked on full-stack design (included database).
+- Configured AWS. 
+
+Together:
+- Created accurate HTTP and Websocket servers, and migrated to Go. 
+- Migrated the packet capture to Go. 
+- Configured packet decrpytion, and optimized for the web application. 
+- Designed the client. 
+
+Future Steps:
+- Areet will focus on the statistical analysis. 
+- Yash will focus on creating better front-end functionality. 
+- Together, they will work on all latency analysis (incoming market data latency and tick-to-trade latency). Together, they will incorporate advanced functionality as well, as listed in future work below. 
+
 ## 5. Future Work
 
 Our next steps are as follows:
