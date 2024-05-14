@@ -12,10 +12,10 @@ freq = int(sys.argv[2])
 df_server = None
 
 if parameter == "vanilla":
-    df_server = VanillaDataFeedServer("localhost", 6789, freq)
+    df_server = VanillaDataFeedServer("0.0.0.0", 6789, freq)
     print(f"Vanilla data feed server started on port {6789}")
 elif parameter == "en":
-    df_server = EncryptedDataFeedServer("localhost", 6789, freq)
+    df_server = EncryptedDataFeedServer("0.0.0.0", 6789, freq)
     print(f"Encrypted data feed server started on port {6789}")
 else:
     print("Invalid parameter. Use one of the following: vanilla, en")
