@@ -93,7 +93,7 @@ func setupEchoServer() {
 
 	api.GET("/ws/packets", handleWebSocketConnection)
 
-	e.Logger.Fatal(e.Start("127.0.0.1:3000"))
+	e.Logger.Fatal(e.Start("0.0.0.0:3000"))
 }
 
 func handleWebSocketConnection(c echo.Context) error {

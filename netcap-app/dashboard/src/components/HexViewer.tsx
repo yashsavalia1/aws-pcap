@@ -1,15 +1,10 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 
 const HexViewer = ({ data }: { data: string }) => {
   const hexBytes = data.match(/.{1,2}/g) || []; // Split hex data into pairs of characters
   const asciiBytes = hexBytes.map(byte => parseInt(byte, 16)); // Convert hex pairs to decimal
   const [selectedByte, setSelectedByte] = useState<number | null>(null);
-
-  useEffect(() => {
-    console.log(selectedByte);
-
-  }, [selectedByte]);
 
   return (
     <div className="flex gap-8 w-full" style={{ fontFamily: "Fira Code" }}>

@@ -1,7 +1,6 @@
 package dashboard
 
 import (
-	"embed"
 	"fmt"
 	"log"
 	"net/url"
@@ -12,7 +11,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 )
 
-var (
+/* var (
 	//go:embed dist/*
 	dist embed.FS
 
@@ -21,13 +20,15 @@ var (
 
 	distDirFS     = echo.MustSubFS(dist, "dist")
 	distIndexHTML = echo.MustSubFS(indexHTML, "dist")
-)
+) */
 
 func RegisterHandlers(e *echo.Echo) {
 	if len(os.Args) > 1 && os.Args[1] == "--prod" {
-		// Use the static assets from the dist directory
-		e.FileFS("/", "index.html", distIndexHTML)
-		e.StaticFS("/", distDirFS)
+		e.Use(middleware.StaticWithConfig(middleware.StaticConfig{
+			Root:   "dashboard/dist",
+			Browse: true,
+			HTML5:  true,
+		}))
 	} else {
 		fmt.Println("Running in dev mode")
 		setupDevProxy(e)
