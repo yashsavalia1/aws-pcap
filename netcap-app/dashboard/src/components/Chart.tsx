@@ -24,7 +24,9 @@ ChartJS.register(
 defaults.font.family = "Inter";
 
 export default function Chart({title, data1}: {title: string, data1: number[]}) {
-  data1 = []
+  if (data1 == undefined) {
+    return null;
+  }
   const options = {
     responsive: true,
     plugins: {
