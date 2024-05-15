@@ -159,7 +159,7 @@ func capturePackets() {
 	if err != nil {
 		panic(err)
 	}
-	if err := handle.SetBPFFilter("tcp and port 8001"); err != nil {
+	if err := handle.SetBPFFilter("port 4789"); err != nil {
 		panic(err)
 	}
 	packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
