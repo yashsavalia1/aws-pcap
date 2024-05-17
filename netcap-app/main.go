@@ -10,7 +10,8 @@ import (
 	"os/signal"
 	"strings"
 
-	"github.com/google/gopacket"        // for packet parsing
+	"github.com/google/gopacket" // for packet parsing
+	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"   // for recieving packets
 	"github.com/google/gopacket/pcapgo" // for writing pcap files
 	"github.com/gorilla/websocket"
@@ -28,11 +29,15 @@ func (b ByteSlice) MarshalJSON() ([]byte, error) {
 }
 
 type TCPPacket struct {
-	Timestamp   string    `json:"timestamp"`
-	Source      string    `json:"source"`
-	Destination string    `json:"destination"`
-	Length      int       `json:"length"`
-	Data        ByteSlice `json:"data"`
+	Timestamp           string    `json:"timestamp"`
+	Source              string    `json:"source"`
+	Destination         string    `json:"destination"`
+	Length              uint16    `json:"length"`
+	Data                ByteSlice `json:"data"`
+	NetworkProtocol     string    `json:"network_protocol"`
+	TransportProtocol   string    `json:"transport_protocol"`
+	TCPFlags            string    `json:"tcp_flags"`
+	ApplicationProtocol string    `json:"application_protocol"`
 }
 
 var (
@@ -67,10 +72,7 @@ func init() {
 }
 
 func main() {
-
 	go capturePackets()
-
-	// start echo server
 	setupEchoServer()
 }
 
@@ -79,7 +81,7 @@ func setupEchoServer() {
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
 		Format: "${time_rfc3339} ${method} ${uri} ${status}\n",
 		Skipper: func(c echo.Context) bool {
-			return !strings.Contains(c.Path(), "/api")
+			return !strings.Contains(c.Request().RequestURI, "/api")
 		},
 	}))
 
@@ -107,16 +109,34 @@ func handleWebSocketConnection(c echo.Context) error {
 	//TODO: get packets from sqlite
 
 	go func() {
-		for {
-			packet := <-packetsCh
-			// Write
+		for packet := range packetsCh {
+			innerPacket := getInnerPacket(packet)
+			if innerPacket == nil {
+				continue
+			}
+
+			networkProtocol := innerPacket.NetworkLayer().LayerType().String()
+			transportProtocol := innerPacket.TransportLayer().LayerType().String()
+			applicationProtocol := innerPacket.ApplicationLayer().LayerType().String()
+			var tcpFlags string
+			if innerPacket.TransportLayer().LayerType() == layers.LayerTypeTCP {
+				tcpLayer := innerPacket.TransportLayer().(*layers.TCP)
+				tcpFlags = getTCPFlags(tcpLayer)
+			}
 			jsonPacket := TCPPacket{
 				Timestamp:   packet.Metadata().Timestamp.String(),
-				Source:      packet.NetworkLayer().NetworkFlow().Src().String(),
-				Destination: packet.NetworkLayer().NetworkFlow().Dst().String(),
-				Length:      len(packet.Data()),
-				Data:        packet.Data(),
+				Source:      innerPacket.NetworkLayer().NetworkFlow().Src().String(),
+				Destination: innerPacket.NetworkLayer().NetworkFlow().Dst().String(),
+				// Need to watch: could be ipv6
+				Length:              innerPacket.NetworkLayer().(*layers.IPv4).Length,
+				Data:                innerPacket.Data(),
+				NetworkProtocol:     networkProtocol,
+				TransportProtocol:   transportProtocol,
+				TCPFlags:            tcpFlags,
+				ApplicationProtocol: applicationProtocol,
 			}
+
+			// Write
 			if err := ws.WriteJSON(jsonPacket); err != nil {
 				if websocket.IsUnexpectedCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway) {
 					c.Logger().Error(err)
@@ -241,4 +261,47 @@ func getDevice() string {
 		}
 	}
 	return dev
+}
+
+func getInnerPacket(packet gopacket.Packet) gopacket.Packet {
+	var vxlanLayer gopacket.Layer
+	for _, layer := range packet.Layers() {
+		if layer.LayerType() == layers.LayerTypeVXLAN {
+			vxlanLayer = layer
+			break
+		}
+	}
+	if vxlanLayer == nil {
+		return nil
+	}
+	return gopacket.NewPacket(vxlanLayer.LayerPayload(), layers.LayerTypeEthernet, gopacket.Default)
+}
+
+func getTCPFlags(tcpLayer *layers.TCP) string {
+	var flags []string
+	if tcpLayer.FIN {
+		flags = append(flags, "FIN")
+	}
+	if tcpLayer.SYN {
+		flags = append(flags, "SYN")
+	}
+	if tcpLayer.RST {
+		flags = append(flags, "RST")
+	}
+	if tcpLayer.PSH {
+		flags = append(flags, "PSH")
+	}
+	if tcpLayer.ACK {
+		flags = append(flags, "ACK")
+	}
+	if tcpLayer.URG {
+		flags = append(flags, "URG")
+	}
+	if tcpLayer.ECE {
+		flags = append(flags, "ECE")
+	}
+	if tcpLayer.CWR {
+		flags = append(flags, "CWR")
+	}
+	return fmt.Sprint(flags)
 }

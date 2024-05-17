@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"slices"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -23,11 +24,15 @@ import (
 ) */
 
 func RegisterHandlers(e *echo.Echo) {
-	if len(os.Args) > 1 && os.Args[1] == "--prod" {
+	if slices.Contains(os.Args, "--prod") {
 		e.Use(middleware.StaticWithConfig(middleware.StaticConfig{
 			Root:   "dashboard/dist",
 			Browse: true,
 			HTML5:  true,
+			Skipper: func(c echo.Context) bool {
+				// Skip if the prefix is /api
+				return len(c.Request().RequestURI) >= 4 && c.Request().RequestURI[:4] == "/api"
+			},
 		}))
 	} else {
 		fmt.Println("Running in dev mode")
@@ -48,7 +53,7 @@ func setupDevProxy(e *echo.Echo) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	// Setep a proxy to the vite dev server on localhost:5173
+	// Setup a proxy to the vite dev server on localhost:5173
 	balancer := middleware.NewRoundRobinBalancer([]*middleware.ProxyTarget{
 		{
 			URL: url,
@@ -58,7 +63,7 @@ func setupDevProxy(e *echo.Echo) {
 		Balancer: balancer,
 		Skipper: func(c echo.Context) bool {
 			// Skip the proxy if the prefix is /api
-			return len(c.Path()) >= 4 && c.Path()[:4] == "/api"
+			return len(c.Request().RequestURI) >= 4 && c.Request().RequestURI[:4] == "/api"
 		},
 	}))
 }

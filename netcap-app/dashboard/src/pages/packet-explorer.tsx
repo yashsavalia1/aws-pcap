@@ -52,7 +52,7 @@ export default function PacketExplorer() {
                       <th>Source IP</th>
                       <th>Destination IP</th>
                       <th>Network Protocol</th>
-                      <th>IP Protocol</th>
+                      <th>Transport Protocol</th>
                       <th>TCP Flags</th>
                       <th>Application Protocol</th>
                     </tr>
