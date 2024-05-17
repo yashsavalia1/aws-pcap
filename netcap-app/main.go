@@ -114,10 +114,20 @@ func handleWebSocketConnection(c echo.Context) error {
 			if innerPacket == nil {
 				continue
 			}
-
-			networkProtocol := innerPacket.NetworkLayer().LayerType().String()
-			transportProtocol := innerPacket.TransportLayer().LayerType().String()
-			applicationProtocol := innerPacket.ApplicationLayer().LayerType().String()
+			
+			var (
+				networkProtocol, transportProtocol, applicationProtocol string
+			)
+			if innerPacket.NetworkLayer() != nil {
+				networkProtocol = innerPacket.NetworkLayer().LayerType().String()
+			}
+			if innerPacket.TransportLayer() != nil {
+				transportProtocol = innerPacket.TransportLayer().LayerType().String()
+			}
+			if innerPacket.ApplicationLayer() != nil {
+				applicationProtocol = innerPacket.ApplicationLayer().LayerType().String()
+			}
+			
 			var tcpFlags string
 			if innerPacket.TransportLayer().LayerType() == layers.LayerTypeTCP {
 				tcpLayer := innerPacket.TransportLayer().(*layers.TCP)
