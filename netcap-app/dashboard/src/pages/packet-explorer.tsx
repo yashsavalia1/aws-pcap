@@ -72,10 +72,10 @@ export default function PacketExplorer() {
                         <td>{packet.length}</td>
                         <td>{packet.source}</td>
                         <td>{packet.destination}</td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
+                        <td>{packet.network_protocol}</td>
+                        <td>{packet.transport_protocol}</td>
+                        <td>{packet.tcp_flags}</td>
+                        <td>{packet.application_protocol}</td>
                       </tr>
                     ))}
                   </tbody>
