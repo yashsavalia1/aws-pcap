@@ -2,9 +2,16 @@ module gitlab.engr.illinois.edu/ie421_high_frequency_trading_spring_2024/ie421_h
 
 go 1.22
 
-require github.com/manifoldco/promptui v0.9.0
+require (
+	github.com/manifoldco/promptui v0.9.0
+	github.com/mushorg/go-dpi v0.0.0-20221106151256-6cae3029b928
+)
 
-require github.com/stretchr/testify v1.9.0 // indirect
+require (
+	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
+	github.com/pkg/errors v0.9.1 // indirect
+	github.com/stretchr/testify v1.9.0 // indirect
+)
 
 require (
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e // indirect

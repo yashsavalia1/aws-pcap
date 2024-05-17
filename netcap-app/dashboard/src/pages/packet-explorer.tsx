@@ -13,7 +13,7 @@ export default function PacketExplorer() {
 
   useEffect(() => {
     if (lastJsonMessage) {
-      setPackets((prevPackets) => [lastJsonMessage, ...prevPackets]);
+      setPackets((prevPackets) => [...prevPackets, lastJsonMessage]);
     }
   }, [lastJsonMessage]);
 

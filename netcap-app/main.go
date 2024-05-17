@@ -19,6 +19,8 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/manifoldco/promptui"
 	_ "github.com/mattn/go-sqlite3" // for sqlite3
+	godpi "github.com/mushorg/go-dpi"
+	godpi_types "github.com/mushorg/go-dpi/types"
 	"gitlab.engr.illinois.edu/ie421_high_frequency_trading_spring_2024/ie421_hft_spring_2024_group_02/group_02_project/netcap-app/dashboard"
 )
 
@@ -46,6 +48,9 @@ var (
 )
 
 func init() {
+	godpi.Initialize()
+
+	// create database
 	db, err := sql.Open("sqlite3", "./prisma/database.db")
 	if err != nil {
 		fmt.Println(err)
@@ -114,25 +119,22 @@ func handleWebSocketConnection(c echo.Context) error {
 			if innerPacket == nil {
 				continue
 			}
-			
-			var (
-				networkProtocol, transportProtocol, applicationProtocol string
-			)
+
+			var networkProtocol, transportProtocol, applicationProtocol, tcpFlags string
 			if innerPacket.NetworkLayer() != nil {
 				networkProtocol = innerPacket.NetworkLayer().LayerType().String()
 			}
 			if innerPacket.TransportLayer() != nil {
 				transportProtocol = innerPacket.TransportLayer().LayerType().String()
+
+				if innerPacket.TransportLayer().LayerType() == layers.LayerTypeTCP {
+					tcpLayer := innerPacket.TransportLayer().(*layers.TCP)
+					tcpFlags = getTCPFlags(tcpLayer)
+				}
 			}
-			if innerPacket.ApplicationLayer() != nil {
-				applicationProtocol = innerPacket.ApplicationLayer().LayerType().String()
-			}
-			
-			var tcpFlags string
-			if innerPacket.TransportLayer().LayerType() == layers.LayerTypeTCP {
-				tcpLayer := innerPacket.TransportLayer().(*layers.TCP)
-				tcpFlags = getTCPFlags(tcpLayer)
-			}
+
+			applicationProtocol = string(getApplicationProtocol(innerPacket))
+
 			jsonPacket := TCPPacket{
 				Timestamp:   packet.Metadata().Timestamp.String(),
 				Source:      innerPacket.NetworkLayer().NetworkFlow().Src().String(),
@@ -314,4 +316,11 @@ func getTCPFlags(tcpLayer *layers.TCP) string {
 		flags = append(flags, "CWR")
 	}
 	return fmt.Sprint(flags)
+}
+
+func getApplicationProtocol(packet gopacket.Packet) godpi_types.Protocol {
+	// classify packet
+	flow, _ := godpi.GetPacketFlow(packet)
+	result := godpi.ClassifyFlow(flow)
+	return result.Protocol
 }
