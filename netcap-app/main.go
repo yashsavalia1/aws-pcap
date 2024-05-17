@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/hex"
 	"encoding/json"
@@ -19,8 +20,6 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/manifoldco/promptui"
 	_ "github.com/mattn/go-sqlite3" // for sqlite3
-	godpi "github.com/mushorg/go-dpi"
-	godpi_types "github.com/mushorg/go-dpi/types"
 	"gitlab.engr.illinois.edu/ie421_high_frequency_trading_spring_2024/ie421_hft_spring_2024_group_02/group_02_project/netcap-app/dashboard"
 )
 
@@ -48,8 +47,6 @@ var (
 )
 
 func init() {
-	godpi.Initialize()
-
 	// create database
 	db, err := sql.Open("sqlite3", "./prisma/database.db")
 	if err != nil {
@@ -133,7 +130,10 @@ func handleWebSocketConnection(c echo.Context) error {
 				}
 			}
 
-			applicationProtocol = string(getApplicationProtocol(innerPacket))
+			if innerPacket.ApplicationLayer() != nil {
+				appLayer := innerPacket.ApplicationLayer()
+				applicationProtocol = getApplicationProtocol(appLayer)
+			}
 
 			jsonPacket := TCPPacket{
 				Timestamp:   packet.Metadata().Timestamp.String(),
@@ -318,9 +318,25 @@ func getTCPFlags(tcpLayer *layers.TCP) string {
 	return fmt.Sprint(flags)
 }
 
-func getApplicationProtocol(packet gopacket.Packet) godpi_types.Protocol {
-	// classify packet
-	flow, _ := godpi.GetPacketFlow(packet)
-	result := godpi.ClassifyFlow(flow)
-	return result.Protocol
+func getApplicationProtocol(appLayer gopacket.ApplicationLayer) string {
+	payload := appLayer.Payload()
+
+	// Check for HTTP request signature
+	if bytes.HasPrefix(payload, []byte("GET ")) ||
+		bytes.HasPrefix(payload, []byte("POST ")) ||
+		bytes.HasPrefix(payload, []byte("PUT ")) ||
+		bytes.HasPrefix(payload, []byte("DELETE ")) ||
+		bytes.HasPrefix(payload, []byte("HEAD ")) ||
+		bytes.HasPrefix(payload, []byte("OPTIONS ")) ||
+		bytes.HasPrefix(payload, []byte("CONNECT ")) ||
+		bytes.HasPrefix(payload, []byte("TRACE ")) {
+		return "HTTP"
+	}
+
+	// Check for HTTP response signature
+	if bytes.HasPrefix(payload, []byte("HTTP/")) {
+		return "HTTP"
+	}
+
+	return ""
 }
