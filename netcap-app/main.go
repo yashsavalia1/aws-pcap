@@ -4,7 +4,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -123,13 +122,6 @@ func handleWebSocketConnection(c echo.Context) error {
 				}
 				return
 			}
-
-			err := ws.WriteJSON(packet)
-			if err != nil {
-				log.Println(err)
-				return
-			}
-
 		}
 	}()
 
