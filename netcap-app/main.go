@@ -1,26 +1,26 @@
 package main
 
 import (
-	"bytes"
-	"database/sql"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"strings"
 
-	"github.com/google/gopacket" // for packet parsing
-	"github.com/google/gopacket/layers"
+	"github.com/dustin/go-broadcast"
+	"github.com/google/gopacket"        // for packet parsing
 	"github.com/google/gopacket/pcap"   // for recieving packets
 	"github.com/google/gopacket/pcapgo" // for writing pcap files
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/manifoldco/promptui"
-	_ "github.com/mattn/go-sqlite3" // for sqlite3
 	"gitlab.engr.illinois.edu/ie421_high_frequency_trading_spring_2024/ie421_hft_spring_2024_group_02/group_02_project/netcap-app/dashboard"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 type ByteSlice []byte
@@ -30,7 +30,8 @@ func (b ByteSlice) MarshalJSON() ([]byte, error) {
 }
 
 type TCPPacket struct {
-	Timestamp           string    `json:"timestamp"`
+	gorm.Model
+	Timestamp           string    `json:"timestamp" gorm:"index"`
 	Source              string    `json:"source"`
 	Destination         string    `json:"destination"`
 	Length              uint16    `json:"length"`
@@ -41,36 +42,28 @@ type TCPPacket struct {
 	ApplicationProtocol string    `json:"application_protocol"`
 }
 
+func (TCPPacket) TableName() string {
+	return "TCPPacket"
+}
+
 var (
-	upgrader  = websocket.Upgrader{}
-	packetsCh chan gopacket.Packet
+	upgrader = websocket.Upgrader{}
+	db       *gorm.DB
+	b        = broadcast.NewBroadcaster(1000)
 )
 
 func init() {
 	// create database
-	db, err := sql.Open("sqlite3", "./prisma/database.db")
+	initDB, err := gorm.Open(sqlite.Open("./database.db"), &gorm.Config{})
+
 	if err != nil {
-		fmt.Println(err)
-	}
-	defer db.Close()
-
-	if _, err := db.Exec(`DROP TABLE IF EXISTS TCPPacket`); err != nil {
 		panic(err)
 	}
-
-	if _, err := db.Exec(`CREATE TABLE TCPPacket (
-		"id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-		"timestamp" DATETIME NOT NULL,
-		"source" TEXT NOT NULL,
-		"destination" TEXT NOT NULL,
-		"length" INTEGER NOT NULL,
-		"data" BLOB NOT NULL
-		)`); err != nil {
+	err = initDB.AutoMigrate(&TCPPacket{})
+	if err != nil {
 		panic(err)
 	}
-	if _, err := db.Exec(`CREATE INDEX idx_TCPPacket_timestamp ON TCPPacket (timestamp)`); err != nil {
-		panic(err)
-	}
+	db = initDB
 }
 
 func main() {
@@ -97,6 +90,11 @@ func setupEchoServer() {
 
 	api.GET("/ws/packets", handleWebSocketConnection)
 
+	api.GET("/packets", func(c echo.Context) error {
+		packets := db.Find(&TCPPacket{})
+		return c.JSON(http.StatusOK, packets)
+	})
+
 	e.Logger.Fatal(e.Start("0.0.0.0:3000"))
 }
 
@@ -108,53 +106,26 @@ func handleWebSocketConnection(c echo.Context) error {
 	}
 	defer ws.Close()
 
-	//TODO: get packets from sqlite
+	packetCh := make(chan interface{})
+	b.Register(packetCh)
+	defer b.Unregister(packetCh)
 
 	go func() {
-		for packet := range packetsCh {
-			innerPacket := getInnerPacket(packet)
-			if innerPacket == nil {
-				continue
-			}
-
-			var networkProtocol, transportProtocol, applicationProtocol, tcpFlags string
-			if innerPacket.NetworkLayer() != nil {
-				networkProtocol = innerPacket.NetworkLayer().LayerType().String()
-			}
-			if innerPacket.TransportLayer() != nil {
-				transportProtocol = innerPacket.TransportLayer().LayerType().String()
-
-				if innerPacket.TransportLayer().LayerType() == layers.LayerTypeTCP {
-					tcpLayer := innerPacket.TransportLayer().(*layers.TCP)
-					tcpFlags = getTCPFlags(tcpLayer)
-				}
-			}
-
-			if innerPacket.ApplicationLayer() != nil {
-				appLayer := innerPacket.ApplicationLayer()
-				applicationProtocol = getApplicationProtocol(appLayer)
-			}
-
-			jsonPacket := TCPPacket{
-				Timestamp:   packet.Metadata().Timestamp.String(),
-				Source:      innerPacket.NetworkLayer().NetworkFlow().Src().String(),
-				Destination: innerPacket.NetworkLayer().NetworkFlow().Dst().String(),
-				// Need to watch: could be ipv6
-				Length:              innerPacket.NetworkLayer().(*layers.IPv4).Length,
-				Data:                innerPacket.Data(),
-				NetworkProtocol:     networkProtocol,
-				TransportProtocol:   transportProtocol,
-				TCPFlags:            tcpFlags,
-				ApplicationProtocol: applicationProtocol,
-			}
-
+		for packet := range packetCh {
 			// Write
-			if err := ws.WriteJSON(jsonPacket); err != nil {
+			if err := ws.WriteJSON(packet); err != nil {
 				if websocket.IsUnexpectedCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway) {
 					c.Logger().Error(err)
 				}
-				break
+				return
 			}
+
+			err := ws.WriteJSON(packet)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+
 		}
 	}()
 
@@ -205,33 +176,23 @@ func capturePackets() {
 	w.WriteFileHeader(65535, handle.LinkType())
 
 	fmt.Println("Capturing packets...")
-	packetsCh = packetSource.Packets()
-	for packet := range packetsCh {
-		//fmt.Println(packet.String())
-		// insert packet to database
-		insertPackets(packet)
+	for packet := range packetSource.Packets() {
 		// write packet to pcap file
 		w.WritePacket(packet.Metadata().CaptureInfo, packet.Data())
+
+		// parse packet
+		jsonPacket := getTCPPacket(packet)
+		if jsonPacket == nil {
+			continue
+		}
+		b.Submit(jsonPacket)
+
+		// insert packet to database
+		db.Create(jsonPacket)
 	}
 }
 
-func insertPackets(packet gopacket.Packet) {
-	db, err := sql.Open("sqlite3", "./prisma/database.db")
-	if err != nil {
-		panic(err)
-	}
-	_, err = db.Exec("INSERT INTO TCPPacket (timestamp, source, destination, length, data) VALUES (?, ?, ?, ?, ?)",
-		packet.Metadata().Timestamp,
-		packet.NetworkLayer().NetworkFlow().Src().String(),
-		packet.NetworkLayer().NetworkFlow().Dst().String(),
-		len(packet.Data()),
-		packet.Data())
-	if err != nil {
-		panic(err)
-	}
-	db.Close()
-}
-
+//lint:ignore U1000 Ignore unused function
 func handleSignalInterrupt(handle *pcap.Handle) {
 	// handle ctrl+c
 	c := make(chan os.Signal, 1)
@@ -273,70 +234,4 @@ func getDevice() string {
 		}
 	}
 	return dev
-}
-
-func getInnerPacket(packet gopacket.Packet) gopacket.Packet {
-	var vxlanLayer gopacket.Layer
-	for _, layer := range packet.Layers() {
-		if layer.LayerType() == layers.LayerTypeVXLAN {
-			vxlanLayer = layer
-			break
-		}
-	}
-	if vxlanLayer == nil {
-		return nil
-	}
-	return gopacket.NewPacket(vxlanLayer.LayerPayload(), layers.LayerTypeEthernet, gopacket.Default)
-}
-
-func getTCPFlags(tcpLayer *layers.TCP) string {
-	var flags []string
-	if tcpLayer.FIN {
-		flags = append(flags, "FIN")
-	}
-	if tcpLayer.SYN {
-		flags = append(flags, "SYN")
-	}
-	if tcpLayer.RST {
-		flags = append(flags, "RST")
-	}
-	if tcpLayer.PSH {
-		flags = append(flags, "PSH")
-	}
-	if tcpLayer.ACK {
-		flags = append(flags, "ACK")
-	}
-	if tcpLayer.URG {
-		flags = append(flags, "URG")
-	}
-	if tcpLayer.ECE {
-		flags = append(flags, "ECE")
-	}
-	if tcpLayer.CWR {
-		flags = append(flags, "CWR")
-	}
-	return fmt.Sprint(flags)
-}
-
-func getApplicationProtocol(appLayer gopacket.ApplicationLayer) string {
-	payload := appLayer.Payload()
-
-	// Check for HTTP request signature
-	if bytes.HasPrefix(payload, []byte("GET ")) ||
-		bytes.HasPrefix(payload, []byte("POST ")) ||
-		bytes.HasPrefix(payload, []byte("PUT ")) ||
-		bytes.HasPrefix(payload, []byte("DELETE ")) ||
-		bytes.HasPrefix(payload, []byte("HEAD ")) ||
-		bytes.HasPrefix(payload, []byte("OPTIONS ")) ||
-		bytes.HasPrefix(payload, []byte("CONNECT ")) ||
-		bytes.HasPrefix(payload, []byte("TRACE ")) {
-		return "HTTP"
-	}
-
-	// Check for HTTP response signature
-	if bytes.HasPrefix(payload, []byte("HTTP/")) {
-		return "HTTP"
-	}
-
-	return ""
 }
