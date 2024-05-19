@@ -91,7 +91,11 @@ func setupEchoServer() {
 	api.GET("/ws/packets", handleWebSocketConnection)
 
 	api.GET("/packets", func(c echo.Context) error {
-		packets := db.Find(&TCPPacket{})
+		var packets []TCPPacket
+		res := db.Find(&packets)
+		if res.Error != nil {
+			return c.JSON(http.StatusInternalServerError, res.Error)
+		}
 		return c.JSON(http.StatusOK, packets)
 	})
 
