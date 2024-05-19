@@ -1,5 +1,5 @@
 import asyncio
-import websockets
+from websockets import server
 import json
 import random
 from datetime import datetime, timezone
@@ -15,7 +15,7 @@ class VanillaDataFeedServer():
 
 
     async def run(self):
-        async with websockets.serve(self.worker, self.hostname, self.port):
+        async with server.serve(self.worker, self.hostname, self.port, compression=None):
             await asyncio.Future()
 
     async def worker(self, ws, path):
