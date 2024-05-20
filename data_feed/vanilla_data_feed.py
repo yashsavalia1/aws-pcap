@@ -36,4 +36,23 @@ class VanillaDataFeedServer():
             'timestamp': datetime.now(timezone.utc).isoformat()
         }
         return data
-        
+
+    def generate_bitcoin_data(self):
+        price_range = stats.norm(70000, 0.01 * 70000)
+        price = price_range.rvs()
+        quantity = np.random.randint(1, 201)
+        mm = np.random.rand() <= 0.8
+        data = {
+            'e': 'trade',
+            'E': datetime.now(timezone.utc).isoformat(),
+            's': 'BTCUSDT',
+            't': str(uuid4()),
+            'p': round(price, 3),
+            'q': quantity,
+            'b': str(uuid4()),
+            'a': str(uuid4()),
+            'T': datetime.now(timezone.utc).isoformat(),
+            'm': mm,
+            'M': True 
+        }
+        return data
