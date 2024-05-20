@@ -154,7 +154,7 @@ func capturePackets() {
 	// dev := getDevice()
 	// fmt.Println(dev)
 	// open device
-	handle, err := pcap.OpenLive("\\Device\\NPF_{FE25A37F-E1DA-4501-A03C-4BAD92808BFC}", 65535, false, pcap.BlockForever)
+	handle, err := pcap.OpenLive("ens5", 65535, false, pcap.BlockForever)
 	if err != nil {
 		panic(err)
 	}
