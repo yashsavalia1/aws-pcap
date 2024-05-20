@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"time"
 
 	"github.com/dustin/go-broadcast"
 	"github.com/google/gopacket"        // for packet parsing
@@ -29,8 +30,8 @@ func (b ByteSlice) MarshalJSON() ([]byte, error) {
 }
 
 type TCPPacket struct {
-	gorm.Model
-	Timestamp           string    `json:"timestamp" gorm:"index"`
+	ID                  uint      `gorm:"primarykey"`
+	Timestamp           time.Time `json:"timestamp" gorm:"index"`
 	Source              string    `json:"source"`
 	Destination         string    `json:"destination"`
 	Length              uint16    `json:"length"`
@@ -39,6 +40,14 @@ type TCPPacket struct {
 	TransportProtocol   string    `json:"transport_protocol"`
 	TCPFlags            string    `json:"tcp_flags"`
 	ApplicationProtocol string    `json:"application_protocol"`
+	StockData           StockData `gorm:"-:all"`
+}
+
+type StockData struct {
+	ID        string  `json:"id"`
+	Symbol    string  `json:"symbol"`
+	Price     float64 `json:"price"`
+	Timestamp string  `json:"timestamp"`
 }
 
 func (TCPPacket) TableName() string {
@@ -53,13 +62,14 @@ var (
 
 func init() {
 	// create database
-	initDB, err := gorm.Open(sqlite.Open("./database.db"), &gorm.Config{})
-
+	initDB, err := gorm.Open(sqlite.Open("./database.db"), &gorm.Config{AllowGlobalUpdate: true})
 	if err != nil {
 		panic(err)
 	}
-	err = initDB.AutoMigrate(&TCPPacket{})
-	if err != nil {
+	if err = initDB.AutoMigrate(&TCPPacket{}); err != nil {
+		panic(err)
+	}
+	if err = initDB.Delete(&TCPPacket{}).Error; err != nil {
 		panic(err)
 	}
 	db = initDB
@@ -144,7 +154,7 @@ func capturePackets() {
 	// dev := getDevice()
 	// fmt.Println(dev)
 	// open device
-	handle, err := pcap.OpenLive("ens5", 65535, false, pcap.BlockForever)
+	handle, err := pcap.OpenLive("\\Device\\NPF_{FE25A37F-E1DA-4501-A03C-4BAD92808BFC}", 65535, false, pcap.BlockForever)
 	if err != nil {
 		panic(err)
 	}

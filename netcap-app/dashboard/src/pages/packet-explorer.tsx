@@ -21,11 +21,11 @@ export default function PacketExplorer() {
     <div>
       <title>AWS Packet Capturing | Packet Explorer</title>
       <Layout>
-        <input className="modal-state" id="modal-1" type="checkbox" />
+        <input className="modal-state" id="info-modal" type="checkbox" />
         <div className="modal">
-          <label className="modal-overlay" htmlFor="modal-1"></label>
+          <label className="modal-overlay" htmlFor="info-modal"></label>
           <div className="modal-content max-w-full flex flex-col gap-5">
-            <label htmlFor="modal-1" className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</label>
+            <label htmlFor="info-modal" className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</label>
             <div className="p-5">
               <HexViewer data={selectedPacket?.data || ""} />
             </div>
@@ -46,7 +46,6 @@ export default function PacketExplorer() {
                 <table className="table table-compact over">
                   <thead>
                     <tr>
-                      <th>Packet ID</th>
                       <th>Recorded Timestamp</th>
                       <th>Packet Length</th>
                       <th>Source IP</th>
@@ -63,11 +62,10 @@ export default function PacketExplorer() {
                         key={i}
                         onClick={() => {
                           setSelectedPacket(packet)
-                          document.getElementById("modal-1")?.click()
+                          document.getElementById("info-modal")?.click()
                         }}
                         className="hover:bg-gray-700 cursor-pointer"
                       >
-                        <td>{i}</td>
                         <td>{packet.timestamp}</td>
                         <td>{packet.length}</td>
                         <td>{packet.source}</td>

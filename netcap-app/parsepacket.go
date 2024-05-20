@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -20,6 +21,7 @@ func getTCPPacket(packet gopacket.Packet) *TCPPacket {
 	var (
 		networkProtocol, transportProtocol, applicationProtocol, tcpFlags string
 		length                                                            uint16
+		stockData                                                         StockData
 	)
 
 	if innerPacket.NetworkLayer() != nil {
@@ -41,11 +43,17 @@ func getTCPPacket(packet gopacket.Packet) *TCPPacket {
 
 	if innerPacket.ApplicationLayer() != nil {
 		appLayer := innerPacket.ApplicationLayer()
-		applicationProtocol = getApplicationProtocol(appLayer)
+		appProtocol, data := getApplicationLayerData(appLayer)
+		applicationProtocol = appProtocol
+		if data != nil {
+			if sd, isStockData := data.(StockData); isStockData {
+				stockData = sd
+			}
+		}
 	}
 
 	return &TCPPacket{
-		Timestamp:           packet.Metadata().Timestamp.String(),
+		Timestamp:           packet.Metadata().Timestamp,
 		Source:              innerPacket.NetworkLayer().NetworkFlow().Src().String(),
 		Destination:         innerPacket.NetworkLayer().NetworkFlow().Dst().String(),
 		Length:              length,
@@ -54,6 +62,7 @@ func getTCPPacket(packet gopacket.Packet) *TCPPacket {
 		TransportProtocol:   transportProtocol,
 		TCPFlags:            tcpFlags,
 		ApplicationProtocol: applicationProtocol,
+		StockData:           stockData,
 	}
 }
 
@@ -100,29 +109,41 @@ func getTCPFlags(tcpLayer *layers.TCP) string {
 	return fmt.Sprint(flags)
 }
 
-func getApplicationProtocol(appLayer gopacket.ApplicationLayer) string {
+func getApplicationLayerData(appLayer gopacket.ApplicationLayer) (string, interface{}) {
 	if appLayer == nil {
-		return ""
+		return "", nil
 	}
 	payload := appLayer.Payload()
 
 	// parse http request
 	_, err := http.ReadRequest(bufio.NewReader(bytes.NewReader(payload)))
 	if err == nil {
-		return "HTTP"
+		return "HTTP", nil
 	}
 
 	// parse http response
 	_, err = http.ReadResponse(bufio.NewReader(bytes.NewReader(payload)), nil)
 	if err == nil {
-		return "HTTP"
+		return "HTTP", nil
 	}
 
 	//parse websocket request
-	_, err = wsparse.ExtractBinaryFrames(payload)
+	frames, err := wsparse.ExtractBinaryFrames(payload)
 	if err == nil {
-		return "WebSocket"
+		for _, frame := range frames {
+			frameData := frame.Payload
+			if len(frameData) == 0 {
+				continue
+			}
+			var jsonData interface{}
+			if err = json.Unmarshal(frameData, &jsonData); err == nil {
+				return "WebSocket", jsonData
+			}
+			continue
+		}
+
+		return "WebSocket", nil
 	}
 
-	return ""
+	return "", nil
 }
