@@ -1,11 +1,14 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
+	"net/http"
 
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
+	wsparse "github.com/usnistgov/ndntdump/websocket"
 )
 
 func getTCPPacket(packet gopacket.Packet) *TCPPacket {
@@ -14,9 +17,18 @@ func getTCPPacket(packet gopacket.Packet) *TCPPacket {
 		return nil
 	}
 
-	var networkProtocol, transportProtocol, applicationProtocol, tcpFlags string
+	var (
+		networkProtocol, transportProtocol, applicationProtocol, tcpFlags string
+		length                                                            uint16
+	)
+
 	if innerPacket.NetworkLayer() != nil {
 		networkProtocol = innerPacket.NetworkLayer().LayerType().String()
+		if innerPacket.NetworkLayer().LayerType() == layers.LayerTypeIPv4 {
+			length = innerPacket.NetworkLayer().(*layers.IPv4).Length
+		} else if innerPacket.NetworkLayer().LayerType() == layers.LayerTypeIPv6 {
+			length = innerPacket.NetworkLayer().(*layers.IPv6).Length
+		}
 	}
 	if innerPacket.TransportLayer() != nil {
 		transportProtocol = innerPacket.TransportLayer().LayerType().String()
@@ -33,11 +45,10 @@ func getTCPPacket(packet gopacket.Packet) *TCPPacket {
 	}
 
 	return &TCPPacket{
-		Timestamp:   packet.Metadata().Timestamp.String(),
-		Source:      innerPacket.NetworkLayer().NetworkFlow().Src().String(),
-		Destination: innerPacket.NetworkLayer().NetworkFlow().Dst().String(),
-		// Need to watch: could be ipv6
-		Length:              innerPacket.NetworkLayer().(*layers.IPv4).Length,
+		Timestamp:           packet.Metadata().Timestamp.String(),
+		Source:              innerPacket.NetworkLayer().NetworkFlow().Src().String(),
+		Destination:         innerPacket.NetworkLayer().NetworkFlow().Dst().String(),
+		Length:              length,
 		Data:                innerPacket.Data(),
 		NetworkProtocol:     networkProtocol,
 		TransportProtocol:   transportProtocol,
@@ -90,23 +101,27 @@ func getTCPFlags(tcpLayer *layers.TCP) string {
 }
 
 func getApplicationProtocol(appLayer gopacket.ApplicationLayer) string {
+	if appLayer == nil {
+		return ""
+	}
 	payload := appLayer.Payload()
 
-	// Check for HTTP request signature
-	if bytes.HasPrefix(payload, []byte("GET ")) ||
-		bytes.HasPrefix(payload, []byte("POST ")) ||
-		bytes.HasPrefix(payload, []byte("PUT ")) ||
-		bytes.HasPrefix(payload, []byte("DELETE ")) ||
-		bytes.HasPrefix(payload, []byte("HEAD ")) ||
-		bytes.HasPrefix(payload, []byte("OPTIONS ")) ||
-		bytes.HasPrefix(payload, []byte("CONNECT ")) ||
-		bytes.HasPrefix(payload, []byte("TRACE ")) {
+	// parse http request
+	_, err := http.ReadRequest(bufio.NewReader(bytes.NewReader(payload)))
+	if err == nil {
 		return "HTTP"
 	}
 
-	// Check for HTTP response signature
-	if bytes.HasPrefix(payload, []byte("HTTP/")) {
+	// parse http response
+	_, err = http.ReadResponse(bufio.NewReader(bytes.NewReader(payload)), nil)
+	if err == nil {
 		return "HTTP"
+	}
+
+	//parse websocket request
+	_, err = wsparse.ExtractBinaryFrames(payload)
+	if err == nil {
+		return "WebSocket"
 	}
 
 	return ""

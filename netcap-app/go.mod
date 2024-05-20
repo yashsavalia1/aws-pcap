@@ -2,14 +2,16 @@ module gitlab.engr.illinois.edu/ie421_high_frequency_trading_spring_2024/ie421_h
 
 go 1.22
 
-require github.com/manifoldco/promptui v0.9.0
+require (
+	github.com/dustin/go-broadcast v0.0.0-20211018055107-71439988bd91
+	github.com/manifoldco/promptui v0.9.0
+	github.com/usnistgov/ndntdump v0.0.0-20240304184745-489b733f7b8c
+	gorm.io/gorm v1.25.10
+)
 
 require (
-	github.com/dustin/go-broadcast v0.0.0-20211018055107-71439988bd91 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
-	github.com/stretchr/testify v1.9.0 // indirect
-	gorm.io/gorm v1.25.10 // indirect
 )
 
 require (
@@ -21,7 +23,7 @@ require (
 	github.com/labstack/gommon v0.4.2 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/mattn/go-sqlite3 v1.14.22
+	github.com/mattn/go-sqlite3 v1.14.22 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	golang.org/x/crypto v0.22.0 // indirect

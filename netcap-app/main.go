@@ -141,18 +141,8 @@ func handleWebSocketConnection(c echo.Context) error {
 }
 
 func capturePackets() {
-	// get device for windows
-	// ifs, _ := pcap.FindAllDevs()
-	// var dev string
-	// //var devices []string
-	// for _, i := range ifs {
-	// 	//devices = append(devices, i.Description)
-	// 	if i.Description == "Intel(R) Wi-Fi 6 AX201 160MHz" {
-	// 		dev = i.Name
-	// 		break
-	// 	}
-	// }
-	//dev = getDevice()
+	// dev := getDevice()
+	// fmt.Println(dev)
 	// open device
 	handle, err := pcap.OpenLive("ens5", 65535, false, pcap.BlockForever)
 	if err != nil {

@@ -9,7 +9,7 @@ export default function Sidebar() {
         </div>
         <div className="flex flex-col">
           <span>AWS Packet Capturing</span>
-          <span className="text-xs font-normal text-content2">Group 4</span>
+          <span className="text-xs font-normal text-content2">Group 2</span>
         </div>
       </section>
       <hr className="mx-4" />
