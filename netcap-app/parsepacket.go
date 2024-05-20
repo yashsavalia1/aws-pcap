@@ -137,11 +137,12 @@ func getApplicationLayerData(appLayer gopacket.ApplicationLayer) (string, interf
 			}
 			var jsonData interface{}
 			if err = json.Unmarshal(frameData, &jsonData); err == nil {
+				fmt.Println("WebSocket JSON Data: ", jsonData)
 				return "WebSocket", jsonData
 			}
 			continue
 		}
-
+		fmt.Println("Could not parse WebSocket JSON Data")
 		return "WebSocket", nil
 	}
 
