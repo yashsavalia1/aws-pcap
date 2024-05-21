@@ -135,6 +135,7 @@ func getApplicationLayerData(appLayer gopacket.ApplicationLayer) (string, interf
 			if len(frameData) == 0 {
 				continue
 			}
+			fmt.Print(string(frameData))
 			var jsonData interface{}
 			if err = json.Unmarshal(frameData, &jsonData); err == nil {
 				fmt.Println("WebSocket JSON Data: ", jsonData)
