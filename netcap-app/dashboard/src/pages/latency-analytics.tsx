@@ -3,6 +3,7 @@ import Chart from "../components/Chart";
 import { Packet } from "../../types/Packet";
 import { useEffect, useState } from "react";
 import useWebSocket from "react-use-websocket";
+import { Duration, ZonedDateTime } from "@js-joda/core"
 
 export default function LatencyAnalytics() {
 
@@ -25,7 +26,7 @@ export default function LatencyAnalytics() {
           <div className="flex flex-wrap">
             <div className="w-1/2 p-3">
               <div className="card w-full max-w-full h-full p-6">
-                <Chart title="chart 1" data={packets.map(p => Date.parse(p.timestamp) - Date.parse(p.stock_data.timestamp))} />
+                <Chart title="chart 1" data={packets.map(p => Duration.between(ZonedDateTime.parse(p.stock_data.timestamp), ZonedDateTime.parse(p.timestamp)).toNanos() / 1000)} />
               </div>
             </div>
             <div className="w-1/2 p-3">
