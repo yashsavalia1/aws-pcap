@@ -11,7 +11,7 @@ export default function LatencyAnalytics() {
   const { lastJsonMessage } = useWebSocket<Packet>(`ws://${window.location.host}/api/ws/packets`)
 
   useEffect(() => {
-    if (lastJsonMessage) {
+    if (lastJsonMessage && lastJsonMessage.stock_data?.timestamp) {
       setPackets((prevPackets) => [lastJsonMessage, ...prevPackets]);
     }
   }, [lastJsonMessage]);
