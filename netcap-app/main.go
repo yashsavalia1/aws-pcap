@@ -63,6 +63,23 @@ type BinanceData struct {
 	Maker            bool   `json:"m"`
 }
 
+type BitStamp struct {
+	Data struct {
+		ID             uint64  `json:"id"`
+		TimeStamp      string  `json:"timestamp"`
+		Amount         float64 `json:"amount"`
+		AmountString   string  `json:"amount_str"`
+		Price          float64 `json:"price"`
+		PriceString    string  `json:"price_str"`
+		Type           int     `json:"type"`
+		MicroTimeStamp string  `json:"microtimestamp"`
+		BuyID          uint64  `json:"buy_order_id"`
+		SellID         uint64  `json:"sell_order_id"`
+	} `json:"data"`
+	Channel string `json:"channel"`
+	Event   string `json:"event"`
+}
+
 func (TCPPacket) TableName() string {
 	return "TCPPacket"
 }
