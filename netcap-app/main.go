@@ -138,7 +138,7 @@ func setupEchoServer() {
 		return c.JSON(http.StatusOK, packets)
 	})
 
-	e.Logger.Fatal(e.Start("0.0.0.0:3000"))
+	e.Logger.Fatal(e.Start("0.0.0.0:80"))
 }
 
 func handleWebSocketConnection(c echo.Context) error {
