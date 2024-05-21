@@ -13,7 +13,7 @@ export default function LatencyAnalytics() {
 
   useEffect(() => {
     if (lastJsonMessage && lastJsonMessage.stock_data?.timestamp) {
-      setPackets((prevPackets) => [lastJsonMessage, ...prevPackets]);
+      setPackets((prevPackets) => [...prevPackets, lastJsonMessage]);
     }
   }, [lastJsonMessage]);
 
