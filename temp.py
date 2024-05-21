@@ -1,15 +1,15 @@
-import asyncio
-import websockets
+import pyshark
+import pyshark.capture
+from pyshark.packet.packet import Packet
+from  pyshark.packet.layers.xml_layer import XmlLayer
 
-async def echo(websocket, path):
-    async for message in websocket:
-        # When a message is received from the client, echo it back
-        await websocket.send(message)
 
-async def main():
-    # Start the WebSocket server on localhost, port 8765
-    async with websockets.serve(echo, "localhost", 8765):
-        await asyncio.Future()  # Keeps the server running indefinitely
+cap = pyshark.LiveCapture(interface=r"\Device\NPF_{FE25A37F-E1DA-4501-A03C-4BAD92808BFC}", bpf_filter='tcp port 80')
 
-if __name__ == "__main__":
-    asyncio.run(main())
+for p in cap.sniff_continuously():
+    packet: Packet = p
+    for layer in packet.layers:
+        l: XmlLayer = layer
+        print(l._layer_name)
+
+

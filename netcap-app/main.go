@@ -30,7 +30,7 @@ func (b ByteSlice) MarshalJSON() ([]byte, error) {
 }
 
 type TCPPacket struct {
-	ID                  uint      `gorm:"primarykey"`
+	ID                  uint      `json:"id" gorm:"primarykey"`
 	Timestamp           time.Time `json:"timestamp" gorm:"index"`
 	Source              string    `json:"source"`
 	Destination         string    `json:"destination"`
@@ -40,7 +40,7 @@ type TCPPacket struct {
 	TransportProtocol   string    `json:"transport_protocol"`
 	TCPFlags            string    `json:"tcp_flags"`
 	ApplicationProtocol string    `json:"application_protocol"`
-	StockData           StockData `gorm:"-:all"`
+	StockData           StockData `json:"stock_data" gorm:"-:all"`
 }
 
 type StockData struct {
