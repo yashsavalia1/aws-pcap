@@ -47,12 +47,10 @@ func getTCPPacket(packet gopacket.Packet) *TCPPacket {
 
 	if innerPacket.ApplicationLayer() != nil {
 		appLayer := innerPacket.ApplicationLayer()
-		appProtocol, data := getApplicationLayerData(appLayer)
+		appProtocol, data := getApplicationLayerData[StockData](appLayer)
 		applicationProtocol = appProtocol
 		if data != nil {
-			if sd, isStockData := data.(StockData); isStockData {
-				stockData = sd
-			}
+			stockData = *data
 		}
 	}
 
@@ -113,7 +111,7 @@ func getTCPFlags(tcpLayer *layers.TCP) string {
 	return fmt.Sprint(flags)
 }
 
-func getApplicationLayerData(appLayer gopacket.ApplicationLayer) (string, interface{}) {
+func getApplicationLayerData[DataFormat any](appLayer gopacket.ApplicationLayer) (string, *DataFormat) {
 	if appLayer == nil {
 		return "", nil
 	}
@@ -139,10 +137,9 @@ func getApplicationLayerData(appLayer gopacket.ApplicationLayer) (string, interf
 			if len(frameData) == 0 {
 				continue
 			}
-			fmt.Print(string(frameData))
-			var jsonData interface{}
+			var jsonData DataFormat
 			if err = json.Unmarshal(frameData, &jsonData); err == nil {
-				return "WebSocket", jsonData
+				return "WebSocket", &jsonData
 			}
 			continue
 		}
