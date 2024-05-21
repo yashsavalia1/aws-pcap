@@ -9,4 +9,12 @@ export type Packet = {
   transport_protocol: string;
   tcp_flags: string;
   application_protocol: string;
+  stock_data: StockData;
+};
+
+export type StockData = {
+  id: string;
+  symbol: string;
+  price: number;
+  timestamp: string;
 };
