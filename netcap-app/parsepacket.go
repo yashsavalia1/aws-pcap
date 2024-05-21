@@ -12,6 +12,10 @@ import (
 	wsparse "github.com/usnistgov/ndntdump/websocket"
 )
 
+const (
+	OpText = 0x81
+)
+
 func getTCPPacket(packet gopacket.Packet) *TCPPacket {
 	innerPacket := getInnerPacket(packet)
 	if innerPacket == nil {
@@ -128,7 +132,7 @@ func getApplicationLayerData(appLayer gopacket.ApplicationLayer) (string, interf
 	}
 
 	//parse websocket request
-	frames, err := wsparse.ExtractBinaryFrames(payload)
+	frames, err := ExtractTextFrames(payload)
 	if err == nil {
 		for _, frame := range frames {
 			frameData := frame.Payload
@@ -138,14 +142,30 @@ func getApplicationLayerData(appLayer gopacket.ApplicationLayer) (string, interf
 			fmt.Print(string(frameData))
 			var jsonData interface{}
 			if err = json.Unmarshal(frameData, &jsonData); err == nil {
-				fmt.Println("WebSocket JSON Data: ", jsonData)
 				return "WebSocket", jsonData
 			}
 			continue
 		}
-		fmt.Println("Could not parse WebSocket JSON Data")
 		return "WebSocket", nil
 	}
 
 	return "", nil
+}
+
+func ExtractTextFrames(input []byte) (frames []wsparse.Frame, e error) {
+	for len(input) > 0 {
+		var f wsparse.Frame
+		input, e = f.Decode(input)
+		if e != nil {
+			return
+		}
+
+		if f.FlagOp != wsparse.FlagFin|OpText {
+			continue
+		}
+
+		f.Unmask()
+		frames = append(frames, f)
+	}
+	return
 }
