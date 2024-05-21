@@ -50,6 +50,19 @@ type StockData struct {
 	Timestamp string  `json:"timestamp"`
 }
 
+type BinanceData struct {
+	EventType        string `json:"e"`
+	EventTime        uint64 `json:"E"`
+	Symbol           string `json:"s"`
+	AggregateTradeID uint64 `json:"a"`
+	Price            string `json:"p"`
+	Quantity         string `json:"q"`
+	FirstTradeID     uint64 `json:"f"`
+	LastTradeID      uint64 `json:"l"`
+	TradeTime        uint64 `json:"T"`
+	Maker            bool   `json:"m"`
+}
+
 func (TCPPacket) TableName() string {
 	return "TCPPacket"
 }
