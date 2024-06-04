@@ -15,7 +15,7 @@ Suppose you have a "trader" server (EC2 instance). The trader is sending trade r
 
 Packet / traffic analysis includes in-depth analytics and charts of tick-to-trade latency. Assuming the exchange has timestamp information as well, we provide latency analytics comparing when the exchange sent the data and when the data arrived at the "trader" server. 
 
-This is highly useful for all traders as the costs of running two EC2 instances along with Traffic Mirroring are significantly cheaper than the upfront hardware and energy costs of a  setup. 
+This is highly useful for all traders as the costs of running two EC2 instances along with Traffic Mirroring are significantly cheaper than the upfront hardware and energy costs of a setup. 
 
 ### Areet Sheth
 
