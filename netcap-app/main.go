@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"os/signal"
@@ -11,10 +12,12 @@ import (
 	"time"
 
 	"github.com/dustin/go-broadcast"
+	"github.com/golang-collections/collections/set"
 	"github.com/google/gopacket"        // for packet parsing
 	"github.com/google/gopacket/pcap"   // for recieving packets
 	"github.com/google/gopacket/pcapgo" // for writing pcap files
 	"github.com/gorilla/websocket"
+	tlsdecrypt "github.com/kiosk404/tls-decrypt/tls"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/manifoldco/promptui"
@@ -80,14 +83,23 @@ type BitStamp struct {
 	Event   string `json:"event"`
 }
 
+type SSLKey struct {
+	Label        string `json:"label"`
+	ClientRandom string `json:"client_random"`
+	Key          string `json:"key"`
+}
+
 func (TCPPacket) TableName() string {
 	return "TCPPacket"
 }
 
 var (
-	upgrader = websocket.Upgrader{}
-	db       *gorm.DB
-	b        = broadcast.NewBroadcaster(1000)
+	db             *gorm.DB
+	upgrader              = websocket.Upgrader{}
+	b                     = broadcast.NewBroadcaster(1000)
+	hostSessions          = map[string]*tlsdecrypt.TLSStream{}
+	clients               = set.New([]string{})
+	keyLogFilePath string = "keylog.txt"
 )
 
 func init() {
@@ -136,6 +148,43 @@ func setupEchoServer() {
 			return c.JSON(http.StatusInternalServerError, res.Error)
 		}
 		return c.JSON(http.StatusOK, packets)
+	})
+
+	api.POST("/ssl-keys", func(c echo.Context) error {
+		file, err := c.FormFile("file")
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, err)
+		}
+		src, err := file.Open()
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, err)
+		}
+		defer src.Close()
+
+		// copy to new file
+		dst, err := os.Create(keyLogFilePath)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, err)
+		}
+		defer dst.Close()
+
+		if _, err = io.Copy(dst, src); err != nil {
+			return c.JSON(http.StatusInternalServerError, err)
+		}
+
+		return c.String(http.StatusOK, "File uploaded")
+	})
+
+	api.POST("/register-client", func(c echo.Context) error {
+		client := c.QueryParam("client")
+		if client == "" {
+			return c.String(http.StatusBadRequest, "Client name is required")
+		}
+		if clients.Has(client) {
+			return c.String(http.StatusBadRequest, "Client already registered")
+		}
+		clients.Insert(client)
+		return c.String(http.StatusOK, "Client registered")
 	})
 
 	e.Logger.Fatal(e.Start("0.0.0.0:80"))
@@ -260,4 +309,24 @@ func getDevice() string {
 		}
 	}
 	return dev
+}
+
+func parseSslKeyLogFile(keyLogFileBytes []byte) ([]SSLKey, error) {
+	keys := []SSLKey{}
+	lines := strings.Split(string(keyLogFileBytes), "\n")
+	for _, line := range lines {
+		if strings.HasPrefix(line, "#") {
+			continue
+		}
+		fields := strings.Fields(line)
+		if len(fields) < 3 {
+			continue
+		}
+		keys = append(keys, SSLKey{
+			Label:        fields[0],
+			ClientRandom: fields[1],
+			Key:          fields[2],
+		})
+	}
+	return keys, nil
 }

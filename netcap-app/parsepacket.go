@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
+	tlsdecrypt "github.com/kiosk404/tls-decrypt/tls"
 	wsparse "github.com/usnistgov/ndntdump/websocket"
 )
 
@@ -17,6 +18,8 @@ const (
 )
 
 func getTCPPacket(packet gopacket.Packet) *TCPPacket {
+	tlsdecrypt.SetKeyLogContent(keyLogFilePath)
+
 	innerPacket := getInnerPacket(packet)
 	if innerPacket == nil {
 		return nil
@@ -24,18 +27,22 @@ func getTCPPacket(packet gopacket.Packet) *TCPPacket {
 
 	var (
 		networkProtocol, transportProtocol, applicationProtocol, tcpFlags string
+		source, dest                                                      string
 		length                                                            uint16
 		stockData                                                         StockData
 	)
 
 	if innerPacket.NetworkLayer() != nil {
 		networkProtocol = innerPacket.NetworkLayer().LayerType().String()
+		source = innerPacket.NetworkLayer().NetworkFlow().Src().String()
+		dest = innerPacket.NetworkLayer().NetworkFlow().Dst().String()
 		if innerPacket.NetworkLayer().LayerType() == layers.LayerTypeIPv4 {
 			length = innerPacket.NetworkLayer().(*layers.IPv4).Length
 		} else if innerPacket.NetworkLayer().LayerType() == layers.LayerTypeIPv6 {
 			length = innerPacket.NetworkLayer().(*layers.IPv6).Length
 		}
 	}
+
 	if innerPacket.TransportLayer() != nil {
 		transportProtocol = innerPacket.TransportLayer().LayerType().String()
 
@@ -47,7 +54,39 @@ func getTCPPacket(packet gopacket.Packet) *TCPPacket {
 
 	if innerPacket.ApplicationLayer() != nil {
 		appLayer := innerPacket.ApplicationLayer()
-		appProtocol, data := getApplicationLayerData[StockData](appLayer)
+		payload := appLayer.LayerPayload()
+
+		// TLS decryption
+		if appLayer.LayerType() == layers.LayerTypeTLS {
+			var client, host string
+			if packet.NetworkLayer() != nil {
+				client = packet.NetworkLayer().NetworkFlow().Src().String()
+			}
+
+			if client == source {
+				host = dest
+			} else {
+				host = source
+			}
+
+			if _, ok := hostSessions[host]; !ok {
+				tlsStream := tlsdecrypt.NewTLSStream()
+				hostSessions[host] = tlsStream
+			}
+
+			if appLayer.LayerPayload()[0] == 0x16 && appLayer.LayerPayload()[5] == 0x01 {
+				hostSessions[host].UnmarshalHandshake(appLayer.LayerPayload(), tlsdecrypt.ClientHello)
+			} else if appLayer.LayerPayload()[0] == 0x16 && appLayer.LayerPayload()[5] == 0x02 {
+				hostSessions[host].UnmarshalHandshake(appLayer.LayerPayload(), tlsdecrypt.ServerHello)
+			} else if appLayer.LayerPayload()[0] == 0x17 && hostSessions[host].Version != 0 {
+				payloadString, err := hostSessions[host].TLSDecrypt(appLayer.LayerPayload())
+				if err == nil {
+					payload = []byte(payloadString)
+				}
+			}
+		}
+
+		appProtocol, data := getApplicationLayerData[StockData](payload)
 		applicationProtocol = appProtocol
 		if data != nil {
 			stockData = *data
@@ -56,8 +95,8 @@ func getTCPPacket(packet gopacket.Packet) *TCPPacket {
 
 	return &TCPPacket{
 		Timestamp:           packet.Metadata().Timestamp,
-		Source:              innerPacket.NetworkLayer().NetworkFlow().Src().String(),
-		Destination:         innerPacket.NetworkLayer().NetworkFlow().Dst().String(),
+		Source:              source,
+		Destination:         dest,
 		Length:              length,
 		Data:                innerPacket.Data(),
 		NetworkProtocol:     networkProtocol,
@@ -111,11 +150,10 @@ func getTCPFlags(tcpLayer *layers.TCP) string {
 	return fmt.Sprint(flags)
 }
 
-func getApplicationLayerData[DataFormat any](appLayer gopacket.ApplicationLayer) (string, *DataFormat) {
-	if appLayer == nil {
+func getApplicationLayerData[DataFormat any](payload []byte) (string, *DataFormat) {
+	if payload == nil {
 		return "", nil
 	}
-	payload := appLayer.Payload()
 
 	// parse http request
 	_, err := http.ReadRequest(bufio.NewReader(bytes.NewReader(payload)))
