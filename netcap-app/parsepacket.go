@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
@@ -20,8 +19,6 @@ const (
 
 func getTCPPacket(packet gopacket.Packet) *TCPPacket {
 	tlsdecrypt.SetKeyLogContent(keyLogFilePath)
-	fmt.Println(os.ReadFile(keyLogFilePath))
-	fmt.Println("-----------------")
 
 	innerPacket := getInnerPacket(packet)
 	if innerPacket == nil {
@@ -83,6 +80,7 @@ func getTCPPacket(packet gopacket.Packet) *TCPPacket {
 				hostSessions[host].UnmarshalHandshake(appLayer.LayerPayload(), tlsdecrypt.ServerHello)
 			} else if appLayer.LayerPayload()[0] == 0x17 && hostSessions[host].Version != 0 {
 				payloadString, err := hostSessions[host].TLSDecrypt(appLayer.LayerPayload())
+				fmt.Println(payloadString, err)
 				if err == nil {
 					payload = []byte(payloadString)
 				}
