@@ -54,7 +54,7 @@ func getTCPPacket(packet gopacket.Packet) *TCPPacket {
 
 	if innerPacket.ApplicationLayer() != nil {
 		appLayer := innerPacket.ApplicationLayer()
-		payload := appLayer.LayerPayload()
+		payload := appLayer.Payload()
 
 		// TLS decryption
 		fmt.Print(HasTLSRecords(payload))
