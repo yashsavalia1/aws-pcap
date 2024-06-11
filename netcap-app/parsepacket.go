@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
@@ -19,6 +20,8 @@ const (
 
 func getTCPPacket(packet gopacket.Packet) *TCPPacket {
 	tlsdecrypt.SetKeyLogContent(keyLogFilePath)
+	fmt.Println(os.ReadFile(keyLogFilePath))
+	fmt.Println("-----------------")
 
 	innerPacket := getInnerPacket(packet)
 	if innerPacket == nil {

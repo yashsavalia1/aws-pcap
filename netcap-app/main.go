@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/dustin/go-broadcast"
-	"github.com/golang-collections/collections/set"
 	"github.com/google/gopacket"        // for packet parsing
 	"github.com/google/gopacket/pcap"   // for recieving packets
 	"github.com/google/gopacket/pcapgo" // for writing pcap files
@@ -98,7 +97,6 @@ var (
 	upgrader              = websocket.Upgrader{}
 	b                     = broadcast.NewBroadcaster(1000)
 	hostSessions          = map[string]*tlsdecrypt.TLSStream{}
-	clients               = set.New([]string{})
 	keyLogFilePath string = "keylog.txt"
 )
 
@@ -173,18 +171,6 @@ func setupEchoServer() {
 		}
 
 		return c.String(http.StatusOK, "File uploaded")
-	})
-
-	api.POST("/register-client", func(c echo.Context) error {
-		client := c.QueryParam("client")
-		if client == "" {
-			return c.String(http.StatusBadRequest, "Client name is required")
-		}
-		if clients.Has(client) {
-			return c.String(http.StatusBadRequest, "Client already registered")
-		}
-		clients.Insert(client)
-		return c.String(http.StatusOK, "Client registered")
 	})
 
 	e.Logger.Fatal(e.Start("0.0.0.0:80"))
