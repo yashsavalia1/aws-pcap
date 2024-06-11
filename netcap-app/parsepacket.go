@@ -57,6 +57,7 @@ func getTCPPacket(packet gopacket.Packet) *TCPPacket {
 		payload := appLayer.LayerPayload()
 
 		// TLS decryption
+		fmt.Print(HasTLSRecords(payload))
 		if HasTLSRecords(payload) {
 			var client, host string
 			if packet.NetworkLayer() != nil {
