@@ -57,6 +57,11 @@ func getTCPPacket(packet gopacket.Packet) *TCPPacket {
 		payload := appLayer.LayerPayload()
 
 		// TLS decryption
+		var layerTypes []gopacket.LayerType
+		for _, layer := range innerPacket.Layers() {
+			layerTypes = append(layerTypes, layer.LayerType())
+		}
+		fmt.Println(layerTypes)
 		if appLayer.LayerType() == layers.LayerTypeTLS {
 			var client, host string
 			if packet.NetworkLayer() != nil {
