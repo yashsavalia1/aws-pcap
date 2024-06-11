@@ -73,7 +73,7 @@ func getTCPPacket(packet gopacket.Packet) *TCPPacket {
 				tlsStream := tlsdecrypt.NewTLSStream()
 				hostSessions[host] = tlsStream
 			}
-
+			fmt.Println(appLayer.LayerPayload()[0], appLayer.LayerPayload()[5])
 			if appLayer.LayerPayload()[0] == 0x16 && appLayer.LayerPayload()[5] == 0x01 {
 				hostSessions[host].UnmarshalHandshake(appLayer.LayerPayload(), tlsdecrypt.ClientHello)
 			} else if appLayer.LayerPayload()[0] == 0x16 && appLayer.LayerPayload()[5] == 0x02 {
