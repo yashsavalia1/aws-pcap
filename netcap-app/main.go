@@ -311,6 +311,7 @@ func getDevice() string {
 	return dev
 }
 
+//lint:ignore U1000 Ignore unused function
 func parseSslKeyLogFile(keyLogFileBytes []byte) ([]SSLKey, error) {
 	keys := []SSLKey{}
 	lines := strings.Split(string(keyLogFileBytes), "\n")
