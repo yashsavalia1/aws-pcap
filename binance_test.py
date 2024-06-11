@@ -26,6 +26,7 @@ class FileWatcherThread(threading.Thread):
             with open("keylog.txt", "r") as f:
                 c = f.read()
                 if c != file_contents:
+                    file_contents = c
                     requests.post(f"http://{monitor_ip}/api/ssl-keys", files={"file": open("keylog.txt", "rb")})
                     
 
