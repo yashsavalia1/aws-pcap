@@ -57,7 +57,6 @@ func getTCPPacket(packet gopacket.Packet) *TCPPacket {
 		payload := appLayer.Payload()
 
 		// TLS decryption
-		fmt.Print(HasTLSRecords(payload))
 		if HasTLSRecords(payload) {
 			var client, host string
 			if packet.NetworkLayer() != nil {
@@ -74,13 +73,13 @@ func getTCPPacket(packet gopacket.Packet) *TCPPacket {
 				tlsStream := tlsdecrypt.NewTLSStream()
 				hostSessions[host] = tlsStream
 			}
-			fmt.Println(appLayer.LayerPayload()[0], appLayer.LayerPayload()[5])
-			if appLayer.LayerPayload()[0] == 0x16 && appLayer.LayerPayload()[5] == 0x01 {
-				hostSessions[host].UnmarshalHandshake(appLayer.LayerPayload(), tlsdecrypt.ClientHello)
-			} else if appLayer.LayerPayload()[0] == 0x16 && appLayer.LayerPayload()[5] == 0x02 {
-				hostSessions[host].UnmarshalHandshake(appLayer.LayerPayload(), tlsdecrypt.ServerHello)
-			} else if appLayer.LayerPayload()[0] == 0x17 && hostSessions[host].Version != 0 {
-				payloadString, err := hostSessions[host].TLSDecrypt(appLayer.LayerPayload())
+
+			if payload[0] == 0x16 && payload[5] == 0x01 {
+				hostSessions[host].UnmarshalHandshake(payload, tlsdecrypt.ClientHello)
+			} else if payload[0] == 0x16 && payload[5] == 0x02 {
+				hostSessions[host].UnmarshalHandshake(payload, tlsdecrypt.ServerHello)
+			} else if payload[0] == 0x17 && hostSessions[host].Version != 0 {
+				payloadString, err := hostSessions[host].TLSDecrypt(payload)
 				fmt.Println(payloadString, err)
 				if err == nil {
 					payload = []byte(payloadString)
