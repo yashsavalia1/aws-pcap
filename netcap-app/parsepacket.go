@@ -69,17 +69,29 @@ func getTCPPacket(packet gopacket.Packet) *TCPPacket {
 				host = source
 			}
 
-			if _, ok := hostSessions[host]; !ok {
+			session, ok := hostSessions[host]
+			if !ok {
 				tlsStream := tlsdecrypt.NewTLSStream()
-				hostSessions[host] = tlsStream
+				hostSessions[host] = TLSSession{
+					tlsStream: tlsStream,
+				}
+				session = hostSessions[host]
 			}
 
 			if payload[0] == 0x16 && payload[5] == 0x01 {
-				hostSessions[host].UnmarshalHandshake(payload, tlsdecrypt.ClientHello)
+				session.clientHello = &payload
+				session.tlsStream.UnmarshalHandshake(payload, tlsdecrypt.ClientHello)
 			} else if payload[0] == 0x16 && payload[5] == 0x02 {
-				hostSessions[host].UnmarshalHandshake(payload, tlsdecrypt.ServerHello)
-			} else if payload[0] == 0x17 && hostSessions[host].Version != 0 {
-				payloadString, err := hostSessions[host].TLSDecrypt(payload)
+				session.serverHello = &payload
+				session.tlsStream.UnmarshalHandshake(payload, tlsdecrypt.ServerHello)
+			} else if payload[0] == 0x17 && session.tlsStream.Version != 0 {
+				if session.clientHello != nil {
+					session.tlsStream.UnmarshalHandshake(*session.clientHello, tlsdecrypt.ClientHello)
+				}
+				if session.serverHello != nil {
+					session.tlsStream.UnmarshalHandshake(*session.serverHello, tlsdecrypt.ServerHello)
+				}
+				payloadString, err := session.tlsStream.TLSDecrypt(payload)
 				fmt.Println(payloadString, err)
 				if err == nil {
 					payload = []byte(payloadString)

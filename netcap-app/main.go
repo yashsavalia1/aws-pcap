@@ -82,10 +82,10 @@ type BitStamp struct {
 	Event   string `json:"event"`
 }
 
-type SSLKey struct {
-	Label        string `json:"label"`
-	ClientRandom string `json:"client_random"`
-	Key          string `json:"key"`
+type TLSSession struct {
+	clientHello *[]byte
+	serverHello *[]byte
+	tlsStream   *tlsdecrypt.TLSStream
 }
 
 func (TCPPacket) TableName() string {
@@ -96,7 +96,7 @@ var (
 	db             *gorm.DB
 	upgrader              = websocket.Upgrader{}
 	b                     = broadcast.NewBroadcaster(1000)
-	hostSessions          = map[string]*tlsdecrypt.TLSStream{}
+	hostSessions          = map[string]TLSSession{}
 	keyLogFilePath string = "keylog.txt"
 )
 
@@ -295,25 +295,4 @@ func getDevice() string {
 		}
 	}
 	return dev
-}
-
-//lint:ignore U1000 Ignore unused function
-func parseSslKeyLogFile(keyLogFileBytes []byte) ([]SSLKey, error) {
-	keys := []SSLKey{}
-	lines := strings.Split(string(keyLogFileBytes), "\n")
-	for _, line := range lines {
-		if strings.HasPrefix(line, "#") {
-			continue
-		}
-		fields := strings.Fields(line)
-		if len(fields) < 3 {
-			continue
-		}
-		keys = append(keys, SSLKey{
-			Label:        fields[0],
-			ClientRandom: fields[1],
-			Key:          fields[2],
-		})
-	}
-	return keys, nil
 }
