@@ -1,12 +1,14 @@
 package main
 
 import (
+	"bufio"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"os/signal"
 	"strings"
 	"time"
@@ -83,9 +85,9 @@ type BitStamp struct {
 }
 
 type TLSSession struct {
-	clientHello *[]byte
-	serverHello *[]byte
-	tlsStream   *tlsdecrypt.TLSStream
+	ClientHello *[]byte
+	ServerHello *[]byte
+	TlsStream   *tlsdecrypt.TLSStream
 }
 
 func (TCPPacket) TableName() string {
@@ -116,7 +118,8 @@ func init() {
 }
 
 func main() {
-	go capturePackets()
+	// go capturePackets()
+	go pysharkCapture()
 	setupEchoServer()
 }
 
@@ -250,6 +253,30 @@ func capturePackets() {
 
 		// insert packet to database
 		db.Create(jsonPacket)
+	}
+}
+
+func pysharkCapture() {
+	cmd := exec.Command("python", "pyshark_live.py")
+
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		panic(err)
+	}
+
+	scanner := bufio.NewScanner(stdout)
+	go func() {
+		for scanner.Scan() {
+			data := scanner.Text()
+			b.Submit(data)
+		}
+	}()
+
+	if err := cmd.Start(); err != nil {
+		panic(err)
+	}
+	if err := cmd.Wait(); err != nil {
+		panic(err)
 	}
 }
 
