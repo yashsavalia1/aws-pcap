@@ -38,8 +38,15 @@ cap = pyshark.LiveCapture(
 )
 for packet in cap.sniff_continuously():
     packet: Packet
+
+    if "ip" in packet:
+        ip_src = packet.ip.src
+        ip_dst = packet.ip.dst
+
     tcp_flags = []
+    transport_protocol = ""
     if "tcp" in packet:
+        transport_protocol = "TCP"
         tcp_flags = int_to_tcp_flags(int(packet.tcp.flags, 16))
 
     app_protocol = ""
@@ -57,9 +64,13 @@ for packet in cap.sniff_continuously():
                 payload_json = json.loads(websocket_payload.text)
 
     tcp_packet = {
+        "source_ip": ip_src,
+        "dest_ip": ip_dst,
         "timestamp": packet.sniff_timestamp,
         "raw_packet": packet.get_raw_packet().hex(),
         "tcp_flags": tcp_flags,
+        "network_protocol": "IPv4",
+        "transport_protocol": transport_protocol,
         "application_protocol": app_protocol,
         "ws_payload": payload_json,
     }

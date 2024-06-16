@@ -15,8 +15,7 @@ import (
 	"time"
 
 	"github.com/dustin/go-broadcast"
-	"github.com/google/gopacket" // for packet parsing
-	"github.com/google/gopacket/layers"
+	"github.com/google/gopacket"        // for packet parsing
 	"github.com/google/gopacket/pcap"   // for recieving packets
 	"github.com/google/gopacket/pcapgo" // for writing pcap files
 	"github.com/gorilla/websocket"
@@ -36,11 +35,15 @@ func (b ByteSlice) MarshalJSON() ([]byte, error) {
 }
 
 type PySharkPacket struct {
-	TimeStamp   float64  `json:"timestamp"`
-	RawPacket   string   `json:"raw_packet"`
-	TCPFlags    []string `json:"tcp_flags"`
-	AppProtocol string   `json:"application_protocol"`
-	WSPayload   string   `json:"ws_payload"`
+	Source            string                 `json:"source_ip"`
+	Destination       string                 `json:"dest_ip"`
+	TimeStamp         string                 `json:"timestamp"`
+	RawPacket         string                 `json:"raw_packet"`
+	NetworkProtocol   string                 `json:"network_protocol"`
+	TransportProtocol string                 `json:"transport_protocol"`
+	TCPFlags          []string               `json:"tcp_flags"`
+	AppProtocol       string                 `json:"application_protocol"`
+	WSPayload         map[string]interface{} `json:"ws_payload"`
 }
 
 type TCPPacket struct {
@@ -286,8 +289,7 @@ func pysharkCapture() {
 				fmt.Println(err)
 				continue
 			}
-			packet := gopacket.NewPacket([]byte(pySharkPacket.RawPacket), layers.LayerTypeEthernet, gopacket.Default)
-			fmt.Println(packet.Layers())
+
 			// b.Submit(data)
 		}
 	}()
