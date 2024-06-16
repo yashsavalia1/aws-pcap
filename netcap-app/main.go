@@ -24,7 +24,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/manifoldco/promptui"
-	"github.com/mitchellh/mapstructure"
 	"gitlab.engr.illinois.edu/ie421_high_frequency_trading_spring_2024/ie421_hft_spring_2024_group_02/group_02_project/netcap-app/dashboard"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -309,11 +308,22 @@ func pysharkCapture() {
 				continue
 			}
 			binanceData := BinanceData{}
-			if err := mapstructure.Decode(pySharkPacket.WSPayload, &binanceData); err != nil {
+			jsonData, err := json.Marshal(pySharkPacket.WSPayload)
+			if err != nil {
 				fmt.Println(err)
 				continue
 			}
+			if err := json.Unmarshal(jsonData, &binanceData); err != nil {
+				fmt.Println(err)
+				continue
+			}
+
 			price, err := strconv.ParseFloat(binanceData.Price, 64)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+
 			tcpPacket := &TCPPacket{
 				Timestamp:           time.Unix(decimal, frac),
 				Source:              pySharkPacket.Source,
