@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"runtime"
 	"strings"
 	"time"
 
@@ -257,7 +258,10 @@ func capturePackets() {
 }
 
 func pysharkCapture() {
-	cmd := exec.Command("python", "pyshark_live.py")
+	cmd := exec.Command("python3", "pyshark_live.py")
+	if runtime.GOOS == "windows" {
+		cmd = exec.Command("python", "pyshark_live.py")
+	}
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
