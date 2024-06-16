@@ -23,6 +23,36 @@ ec2.describeInstanceStatus(params, (err, data) => {
         console.log("Success:", JSON.stringify(data, null, 2));
     }
 });
+
+ec2.describeTags(params, (err, data) => {
+    if (err) {
+        console.error("Error:", err);
+    } else {
+        console.log("Success:", JSON.stringify(data, null, 2));
+    }
+});
+
+ec2.describeTrafficMirrorSessions(params, (err, data) => {
+    if (err) {
+        console.error("Error:", err);
+    } else {
+        console.log("Success:", JSON.stringify(data, null, 2));
+    }
+});
+
+ec2.describeNetworkInterfaces(params, (err, data) => {
+    if (err) {
+        console.error("Error:", err);
+    } else {
+        console.log("Success:", JSON.stringify(data, null, 2));
+    }
+});
+
+
+
+
+
+
 // ec2.describeInstances(params, (err, data) => {
 //   if (err) {
 //     console.error("Error:", err);

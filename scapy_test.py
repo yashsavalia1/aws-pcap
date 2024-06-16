@@ -13,3 +13,5 @@ def handle_packet(packet):
 
 # Start capturing packets
 sniff(iface="eth0", prn=handle_packet)
+
+#DOES NOT WORK
