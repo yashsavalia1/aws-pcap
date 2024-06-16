@@ -63,4 +63,4 @@ for packet in cap.sniff_continuously():
         "application_protocol": app_protocol,
         "ws_payload": payload_json,
     }
-    print(json.dumps(tcp_packet, indent=4), flush=True)
+    print(json.dumps(tcp_packet), flush=True)
