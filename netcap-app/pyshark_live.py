@@ -1,4 +1,3 @@
-import time
 from typing import List
 import pyshark
 from pyshark.packet.packet import Packet
@@ -39,31 +38,18 @@ cap = pyshark.LiveCapture(
 )
 for packet in cap.sniff_continuously():
     packet: Packet
-    layers: List[BaseLayer] = packet.layers
-    for i, layer in enumerate(layers):
-        if layer.layer_name == "vxlan":
-            layers = layers[i + 1 :]
-            break
-
-    ip_layers = packet.get_multiple_layers("ip")
-    if len(ip_layers) == 0:
-        ip_layers = packet.get_multiple_layers("ipv6")
-
-    ip_layer = ip_layers[-1]
-
-    src = ip_layer.src
-    dst = ip_layer.dst
-
-    tcp_flags = int_to_tcp_flags(int(packet.tcp.flags, 16))
+    tcp_flags = []
+    if "tcp" in packet:
+        tcp_flags = int_to_tcp_flags(int(packet.tcp.flags, 16))
 
     app_protocol = ""
-    if 'http' in packet:
-        app_protocol = "http"
+    if "http" in packet:
+        app_protocol = "HTTP"
 
     # Check if the packet contains WebSocket layer
     payload_json = {}
     if "websocket" in packet:
-        app_protocol = "websocket"
+        app_protocol = "WebSocket"
         # The payload in WebSocket can be found in different fields depending on the frame type
         if hasattr(packet.websocket, "payload"):
             websocket_payload = packet.websocket.payload
@@ -72,15 +58,9 @@ for packet in cap.sniff_continuously():
 
     tcp_packet = {
         "timestamp": packet.sniff_timestamp,
-        "source": src,
-        "destination": dst,
-        "length": packet.length,
-        "data": packet.get_raw_packet().hex(),
-        "network_protocol": "ip",
-        "transport_protocol": "tcp",
+        "raw_packet": packet.get_raw_packet().hex(),
         "tcp_flags": tcp_flags,
         "application_protocol": app_protocol,
-        "stock_data": payload_json,
+        "ws_payload": payload_json,
     }
     print(json.dumps(tcp_packet, indent=4), flush=True)
-
