@@ -24,6 +24,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/manifoldco/promptui"
+	"github.com/mitchellh/mapstructure"
 	"gitlab.engr.illinois.edu/ie421_high_frequency_trading_spring_2024/ie421_hft_spring_2024_group_02/group_02_project/netcap-app/dashboard"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -291,13 +292,30 @@ func pysharkCapture() {
 				fmt.Println(err)
 				continue
 			}
-			timestamp, err := strconv.Atoi(strings.ReplaceAll(pySharkPacket.TimeStamp, ".", ""))
+			parts := strings.Split(pySharkPacket.TimeStamp, ".")
+			if len(parts) != 2 {
+				fmt.Println("Invalid timestamp")
+				continue
+			}
+			decimal, err := strconv.ParseInt(parts[0], 10, 0)
 			if err != nil {
 				fmt.Println(err)
 				continue
 			}
+
+			frac, err := strconv.ParseInt(parts[1], 10, 0)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+			binanceData := BinanceData{}
+			if err := mapstructure.Decode(pySharkPacket.WSPayload, &binanceData); err != nil {
+				fmt.Println(err)
+				continue
+			}
+			price, err := strconv.ParseFloat(binanceData.Price, 64)
 			tcpPacket := &TCPPacket{
-				Timestamp:           time.Unix(int64(timestamp), 0),
+				Timestamp:           time.Unix(decimal, frac),
 				Source:              pySharkPacket.Source,
 				Destination:         pySharkPacket.Destination,
 				Length:              uint16(len(pySharkPacket.RawPacket)),
@@ -306,7 +324,12 @@ func pysharkCapture() {
 				TransportProtocol:   pySharkPacket.TransportProtocol,
 				ApplicationProtocol: pySharkPacket.AppProtocol,
 				TCPFlags:            fmt.Sprint(pySharkPacket.TCPFlags),
-				StockData:           StockData{},
+				StockData: StockData{
+					ID:        fmt.Sprint(binanceData.AggregateTradeID),
+					Symbol:    binanceData.Symbol,
+					Price:     price,
+					Timestamp: strconv.FormatUint(binanceData.TradeTime, 10),
+				},
 			}
 
 			b.Submit(tcpPacket)
