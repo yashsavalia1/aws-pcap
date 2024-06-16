@@ -32,13 +32,17 @@ func main() {
 
 	svc := ec2.New(sess)
 
-	//params := &ec2.DescribeInstanceStatusInput{}
+	params := &ec2.DescribeInstanceStatusInput{}
 
-	// resp, err := svc.DescribeInstanceStatus(params)
-	// if err != nil {
-	// 	log.Fatal("Error describing instance status:", err)
-	// }
-	//fmt.Printf("Instance Status: %s\n", resp)
+	resp, err := svc.DescribeInstanceStatus(params)
+	if err != nil {
+		log.Fatal("Error describing instance status:", err)
+	}
+
+	if len(resp.InstanceStatuses) == 0 {
+		log.Fatal("No instances found")
+	}
+	// fmt.Printf("Instance Status: %s\n", resp)
 
 	tagParams := &ec2.DescribeTagsInput{}
 	tagsResp, err := svc.DescribeTags(tagParams)
