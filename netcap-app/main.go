@@ -291,41 +291,53 @@ func pysharkCapture() {
 				fmt.Println(err)
 				continue
 			}
-			parts := strings.Split(pySharkPacket.TimeStamp, ".")
-			if len(parts) != 2 {
+
+			splitTimestamp := strings.Split(pySharkPacket.TimeStamp, ".")
+			if len(splitTimestamp) != 2 {
 				fmt.Println("Invalid timestamp")
 				continue
 			}
-			decimal, err := strconv.ParseInt(parts[0], 10, 0)
+			decTimestamp, err := strconv.ParseInt(splitTimestamp[0], 10, 0)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+			fracTimestamp, err := strconv.ParseInt(splitTimestamp[1], 10, 0)
 			if err != nil {
 				fmt.Println(err)
 				continue
 			}
 
-			frac, err := strconv.ParseInt(parts[1], 10, 0)
-			if err != nil {
-				fmt.Println(err)
-				continue
-			}
-			binanceData := BinanceData{}
-			jsonData, err := json.Marshal(pySharkPacket.WSPayload)
-			if err != nil {
-				fmt.Println(err)
-				continue
-			}
-			if err := json.Unmarshal(jsonData, &binanceData); err != nil {
-				fmt.Println(err)
-				continue
-			}
+			var stockData StockData
 
-			price, err := strconv.ParseFloat(binanceData.Price, 64)
-			if err != nil {
-				fmt.Println(err)
-				continue
+			if pySharkPacket.AppProtocol == "websocket" {
+				binanceData := BinanceData{}
+				jsonData, err := json.Marshal(pySharkPacket.WSPayload)
+				if err != nil {
+					fmt.Println(err)
+					continue
+				}
+				if err := json.Unmarshal(jsonData, &binanceData); err != nil {
+					fmt.Println(err)
+					continue
+				}
+
+				price, err := strconv.ParseFloat(binanceData.Price, 64)
+				if err != nil {
+					fmt.Println(err)
+					continue
+				}
+				stockData = StockData{
+					ID:     fmt.Sprint(binanceData.AggregateTradeID),
+					Symbol: binanceData.Symbol,
+					Price:  price,
+					// Example timestamp: "1718525710180"
+					Timestamp: time.Unix(0, int64(binanceData.TradeTime)*int64(time.Millisecond)).String(),
+				}
 			}
 
 			tcpPacket := &TCPPacket{
-				Timestamp:           time.Unix(decimal, frac),
+				Timestamp:           time.Unix(decTimestamp, fracTimestamp),
 				Source:              pySharkPacket.Source,
 				Destination:         pySharkPacket.Destination,
 				Length:              uint16(len(pySharkPacket.RawPacket)),
@@ -334,12 +346,7 @@ func pysharkCapture() {
 				TransportProtocol:   pySharkPacket.TransportProtocol,
 				ApplicationProtocol: pySharkPacket.AppProtocol,
 				TCPFlags:            fmt.Sprint(pySharkPacket.TCPFlags),
-				StockData: StockData{
-					ID:        fmt.Sprint(binanceData.AggregateTradeID),
-					Symbol:    binanceData.Symbol,
-					Price:     price,
-					Timestamp: strconv.FormatUint(binanceData.TradeTime, 10),
-				},
+				StockData:           stockData,
 			}
 
 			b.Submit(tcpPacket)
