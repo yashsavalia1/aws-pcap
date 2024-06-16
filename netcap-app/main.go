@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -44,6 +45,7 @@ type PySharkPacket struct {
 	TCPFlags          []string               `json:"tcp_flags"`
 	AppProtocol       string                 `json:"application_protocol"`
 	WSPayload         map[string]interface{} `json:"ws_payload"`
+	Length            uint16                 `json:"length"`
 }
 
 type TCPPacket struct {
@@ -289,8 +291,25 @@ func pysharkCapture() {
 				fmt.Println(err)
 				continue
 			}
+			timestamp, err := strconv.Atoi(strings.ReplaceAll(pySharkPacket.TimeStamp, ".", ""))
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+			tcpPacket := &TCPPacket{
+				Timestamp:           time.Unix(int64(timestamp), 0),
+				Source:              pySharkPacket.Source,
+				Destination:         pySharkPacket.Destination,
+				Length:              uint16(len(pySharkPacket.RawPacket)),
+				Data:                ByteSlice(pySharkPacket.RawPacket),
+				NetworkProtocol:     pySharkPacket.NetworkProtocol,
+				TransportProtocol:   pySharkPacket.TransportProtocol,
+				ApplicationProtocol: pySharkPacket.AppProtocol,
+				TCPFlags:            fmt.Sprint(pySharkPacket.TCPFlags),
+				StockData:           StockData{},
+			}
 
-			// b.Submit(data)
+			b.Submit(tcpPacket)
 		}
 	}()
 

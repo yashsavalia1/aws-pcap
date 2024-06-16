@@ -68,6 +68,7 @@ for packet in cap.sniff_continuously():
         "dest_ip": ip_dst,
         "timestamp": packet.sniff_timestamp,
         "raw_packet": packet.get_raw_packet().hex(),
+        "length": packet.length,
         "tcp_flags": tcp_flags,
         "network_protocol": "IPv4",
         "transport_protocol": transport_protocol,
