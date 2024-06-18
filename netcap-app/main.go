@@ -321,7 +321,9 @@ func pysharkCapture() {
 					fmt.Println(err)
 					continue
 				}
-
+				if binanceData.Price == "" {
+					continue
+				}
 				price, err := strconv.ParseFloat(binanceData.Price, 64)
 				if err != nil {
 					fmt.Println(err)
