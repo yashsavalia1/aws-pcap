@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -15,11 +16,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/dustin/go-broadcast"
 	"github.com/google/gopacket"        // for packet parsing
 	"github.com/google/gopacket/pcap"   // for recieving packets
 	"github.com/google/gopacket/pcapgo" // for writing pcap files
 	"github.com/gorilla/websocket"
+	"github.com/joho/godotenv"
 	tlsdecrypt "github.com/kiosk404/tls-decrypt/tls"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -111,6 +117,7 @@ func (TCPPacket) TableName() string {
 
 var (
 	db             *gorm.DB
+	svc            *ec2.EC2
 	upgrader              = websocket.Upgrader{}
 	b                     = broadcast.NewBroadcaster(1000)
 	hostSessions          = map[string]TLSSession{}
@@ -130,6 +137,25 @@ func init() {
 		panic(err)
 	}
 	db = initDB
+
+	err = godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	sess, err := session.NewSession(&aws.Config{
+		Region: aws.String(os.Getenv("AWS_REGION")),
+		Credentials: credentials.NewStaticCredentials(
+			os.Getenv("AWS_ACCESS_KEY_ID"),
+			os.Getenv("AWS_SECRET_ACCESS_KEY"),
+			"",
+		),
+	})
+	if err != nil {
+		log.Fatal("Error creating session:", err)
+	}
+
+	svc = ec2.New(sess)
 }
 
 func main() {
@@ -190,6 +216,8 @@ func setupEchoServer() {
 
 		return c.String(http.StatusOK, "File uploaded")
 	})
+
+	api.GET("/ec2-instances", getEc2Instances)
 
 	e.Logger.Fatal(e.Start("0.0.0.0:80"))
 }
@@ -405,4 +433,101 @@ func getDevice() string {
 		}
 	}
 	return dev
+}
+
+func getEc2Instances(c echo.Context) error {
+	params := &ec2.DescribeInstanceStatusInput{}
+
+	resp, err := svc.DescribeInstanceStatus(params)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err)
+	}
+
+	if len(resp.InstanceStatuses) == 0 {
+		return c.JSON(http.StatusNotFound, "No instances found")
+	}
+
+	tagParams := &ec2.DescribeTagsInput{}
+	tagsResp, err := svc.DescribeTags(tagParams)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err)
+	}
+
+	trafficMirrorResp, err := svc.DescribeTrafficMirrorSessions(&ec2.DescribeTrafficMirrorSessionsInput{})
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err)
+	}
+	if len(trafficMirrorResp.TrafficMirrorSessions) == 0 {
+		return c.JSON(http.StatusNotFound, "No Traffic Mirror Sessions found")
+	}
+
+	networkInterfacesResp, err := svc.DescribeNetworkInterfaces(&ec2.DescribeNetworkInterfacesInput{})
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err)
+	}
+	if len(networkInterfacesResp.NetworkInterfaces) == 0 {
+		return c.JSON(http.StatusNotFound, "No Network Interfaces found")
+	}
+
+	networkInterfaceId := trafficMirrorResp.TrafficMirrorSessions[0].NetworkInterfaceId
+
+	trafficMirrorTargetId := trafficMirrorResp.TrafficMirrorSessions[0].TrafficMirrorTargetId
+
+	trafficMirrorTargetsResp, err := svc.DescribeTrafficMirrorTargets(&ec2.DescribeTrafficMirrorTargetsInput{
+		TrafficMirrorTargetIds: []*string{trafficMirrorTargetId},
+	})
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err)
+	}
+
+	monitorEniId := trafficMirrorTargetsResp.TrafficMirrorTargets[0].NetworkInterfaceId
+
+	monitorInstanceId := ""
+
+	for _, networkInterface := range networkInterfacesResp.NetworkInterfaces {
+		if *networkInterface.NetworkInterfaceId == *monitorEniId {
+			monitorInstanceId = *networkInterface.Attachment.InstanceId
+			break
+		}
+	}
+
+	ec2InstanceId := ""
+
+	for _, networkInterface := range networkInterfacesResp.NetworkInterfaces {
+		if *networkInterface.NetworkInterfaceId == *networkInterfaceId {
+			ec2InstanceId = *networkInterface.Attachment.InstanceId
+			break
+		}
+	}
+
+	if ec2InstanceId == "" || monitorInstanceId == "" {
+		return c.JSON(http.StatusNotFound, "No EC2 Instance found")
+	}
+
+	if len(tagsResp.Tags) == 0 {
+		return c.JSON(http.StatusNotFound, "No Tags found")
+	}
+	trader := echo.Map{
+		"id":   ec2InstanceId,
+		"name": "",
+	}
+
+	monitor := echo.Map{
+		"id":   monitorInstanceId,
+		"name": "",
+	}
+
+	for _, tag := range tagsResp.Tags {
+		if *tag.ResourceId == ec2InstanceId && *tag.Key == "Name" {
+			trader["name"] = *tag.Value
+		}
+		if *tag.ResourceId == monitorInstanceId && *tag.Key == "Name" {
+			monitor["name"] = *tag.Value
+		}
+	}
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"trader":  trader,
+		"monitor": monitor,
+	})
 }
