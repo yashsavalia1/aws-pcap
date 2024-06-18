@@ -77,7 +77,7 @@ Traffic mirroring in AWS is a feature that allows you to capture and inspect net
 
 ### Back-end: GO packet capture application
 
-Using Echo for the HTTP server (trading API) and websocket (data feed). Also using the GO pcap library for packet capture. 
+Using Echo for the HTTP server (trading API) and websocket (data feed). Also using the Go pcap library for packet capture. Using Go and Python (Pyshark) for live packet parsing. 
 
 ### Database: SQLite
 
@@ -116,6 +116,7 @@ Areet:
 - Added encryption to servers. 
 - Created C scripts for packet capture and parsing. 
 - Added packet decrpytion. 
+- Connected live Binance websocket server. 
 
 Yash:
 - Spearheaded front-end design.
@@ -128,6 +129,7 @@ Together:
 - Migrated the packet capture to Go. 
 - Configured packet decrpytion, and optimized for the web application. 
 - Designed the client. 
+- Added PyShark live packet capture for ssl decryption. 
 
 Future Steps:
 - Areet will focus on the statistical analysis. 
@@ -139,8 +141,7 @@ Future Steps:
 Our next steps are as follows:
 
 - Ensure fully accurate data via packet capture and front-end display. 
-- Utilize a real data feed for more accurate information and appeal.
-- Finish integrating the order API server to track tick-to-trade analytics. 
+- Include an algorithmic trading aspect (mock at first), to develop accurate tick-to-trade data.
 - Include multiple exchanges, order servers, etc for more in-depth analytics. 
 - Use machine learning and statistical modeling when analyzing latency. 
 - Add more functionality for charting on the front-end. 
@@ -159,6 +160,7 @@ My main takeaways were:
 - Packet-capture concepts. Before this, we covered pcap in class, but I did not fully understand the concepts. This project helped me understand every aspect of packet capture, including how to use Wireshark, how to use libpcap, how to understand packets, how to decrypt packets, etc
 - Go. I was able to learn Go for the first time, which was very exciting. 
 - Future work. The project is not fully complete, and I am excited to learn more by completing the project and adding more to the project. 
+- The live decryption portion of the project was very challenging, but that contributed to a great learning opportunity. 
 
 ### Yash: 
 
@@ -167,3 +169,4 @@ My main takeawys were:
 - I was very unaware of packet capture, so the project helped increase my understanding. Now I understand how packet capture works and can use packet capture for latency analysis for financial and other projects going forward. 
 - I always knew Go, but never had a chance to use it. Using it was very fun, but still presented a learning curve. 
 - I have done many full-stack projects, but this project was quite challenging, so I was able to learn alot from it. This includes more advanced charting, creating a better UI/UX, working with a complex backend, etc. 
+- Figuring out all the aspects of packet decryption, including the many libraries/packages and the TLS handshake, was highly challenging and rewarding. 
