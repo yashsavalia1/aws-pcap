@@ -29,7 +29,7 @@ export default function Chart({title, data}: {title: string, data: number[]}) {
     responsive: true,
     plugins: {
       legend: {
-        position: "top" as const,
+        display: false,
       },
       title: {
         display: true,
@@ -46,7 +46,7 @@ export default function Chart({title, data}: {title: string, data: number[]}) {
     labels: data.map((_, i) => i.toString()),
     datasets: [
       {
-        label: "Dataset 1",
+        label: "Latency (ms)",
         data: data,
         borderColor: "rgb(255, 99, 132)",
         backgroundColor: "rgba(255, 99, 132, 0.5)",
