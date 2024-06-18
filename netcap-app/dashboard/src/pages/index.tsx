@@ -31,7 +31,7 @@ export default function Home() {
 
   useEffect(() => {
     (async () => {
-      const res = await fetch("/api/traders");
+      const res = await fetch("/api/ec2-instances");
       const data: { trader: Trader; monitor: Trader } = await res.json();
       setTraders([
         {
