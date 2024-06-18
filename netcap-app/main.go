@@ -63,10 +63,10 @@ type TCPPacket struct {
 }
 
 type StockData struct {
-	ID        string  `json:"id"`
-	Symbol    string  `json:"symbol"`
-	Price     float64 `json:"price"`
-	Timestamp string  `json:"timestamp"`
+	ID        string    `json:"id"`
+	Symbol    string    `json:"symbol"`
+	Price     float64   `json:"price"`
+	Timestamp time.Time `json:"timestamp"`
 }
 
 type BinanceData struct {
@@ -310,7 +310,7 @@ func pysharkCapture() {
 
 			var stockData StockData
 
-			if pySharkPacket.AppProtocol == "websocket" {
+			if pySharkPacket.AppProtocol == "WebSocket" {
 				binanceData := BinanceData{}
 				jsonData, err := json.Marshal(pySharkPacket.WSPayload)
 				if err != nil {
@@ -332,7 +332,7 @@ func pysharkCapture() {
 					Symbol: binanceData.Symbol,
 					Price:  price,
 					// Example timestamp: "1718525710180"
-					Timestamp: time.Unix(0, int64(binanceData.TradeTime)*int64(time.Millisecond)).String(),
+					Timestamp: time.Unix(0, int64(binanceData.TradeTime)*int64(time.Millisecond)),
 				}
 			}
 
