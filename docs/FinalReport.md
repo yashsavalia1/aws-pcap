@@ -4,7 +4,7 @@
 
 ## 1. Abstract
 
-In HFT (High Frequency Trading), traders constantly receive market data. When their algoriths detect preset market behaviour, they trigger trade requests. Thus, the tick-to-trade time is very important for traders. Tick-to-trade time is the the latenchy between receiving market data and placing a trade. It is very important for traders to tune their hardware to make this process more efficient. 
+In HFT (High Frequency Trading), traders constantly receive market data. When their algorithms detect preset market behaviour, they trigger trade requests. Thus, the tick-to-trade time is very important for traders. Tick-to-trade time is the the latenchy between receiving market data and placing a trade. It is very important for traders to tune their hardware to make this process more efficient. 
 
 Unlike other instruments and markets, cryptocurrency has more at-home traders. These traders do not work for major firms or shops, but rather trade from their computers or phones. This is possible becasue cryptocurrency is decentralized and all traders have fair access to the market feed. 
 
