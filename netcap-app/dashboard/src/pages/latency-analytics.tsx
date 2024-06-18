@@ -26,7 +26,7 @@ export default function LatencyAnalytics() {
           <div className="flex flex-wrap">
             <div className="w-1/2 p-3">
               <div className="card w-full max-w-full h-full p-6">
-                <Chart title="chart 1" data={packets.map(p => Duration.between(ZonedDateTime.parse(p.stock_data.timestamp), ZonedDateTime.parse(p.timestamp)).toNanos() / 1000)} />
+                <Chart title="chart 1" data={packets.filter(p => p.id).map(p => Duration.between(ZonedDateTime.parse(p.stock_data.timestamp), ZonedDateTime.parse(p.timestamp)).toNanos() / 1000)} />
               </div>
             </div>
             <div className="w-1/2 p-3">
