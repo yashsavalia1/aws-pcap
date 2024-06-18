@@ -40,6 +40,10 @@ export default function Chart({title, data}: {title: string, data: number[]}) {
         }
       },
     },
+    animation: {
+      duration: 0, // general animation time
+    },
+    responsiveAnimationDuration: 0
   };
 
   const chartData: ChartData<"line"> = {
