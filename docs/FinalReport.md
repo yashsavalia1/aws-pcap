@@ -4,11 +4,11 @@
 
 ## 1. Abstract
 
-In HFT (High Frequency Trading), traders constantly receive market data. When their algorithms detect preset market behaviour, they trigger trade requests. Thus, the tick-to-trade time is very important for traders. Tick-to-trade time is the the latenchy between receiving market data and placing a trade. It is very important for traders to tune their hardware to make this process more efficient. 
+In HFT (High Frequency Trading), traders constantly receive market data. When their algorithms detect preset market behaviour, they trigger trade requests. Thus, the tick-to-trade time is very important for traders. Tick-to-trade time is the the latency between receiving market data and placing a trade. It is very important for traders to tune their hardware to make this process more efficient. 
 
 Unlike other instruments and markets, cryptocurrency has more at-home traders. These traders do not work for major firms or shops, but rather trade from their computers or phones. This is possible becasue cryptocurrency is decentralized and all traders have fair access to the market feed. 
 
-We present a unique solution to cryptocurrency traders: CloudPCap (Cloud-based packet pacture). As traders receive incoming market data packets, we monitor the latency of the packets to see the difference between the time the packet was sent from the exchange and the time the packet was received by the trader. We also monitor the difference between the time the packet was received and the time the trade was placed. Traders can use this to compare different data feed exchanges, order exchanges, and algorithms. 
+We present a unique solution to cryptocurrency traders: CloudPCap (Cloud-based packet capture). As traders receive incoming market data packets, we monitor the latency of the packets to see the difference between the time the packet was sent from the exchange and the time the packet was received by the trader. We also monitor the difference between the time the packet was received and the time the trade was placed. Traders can use this to compare different data feed exchanges, order exchanges, and algorithms. 
 
 The most appealing aspect of our solution is that the software is built to be stored on AWS, or other cloud based services. This provides a much cheaper alternative for at-home traders compared to an expensive hardware setup. 
 
@@ -107,7 +107,7 @@ The monitoring server accepts the packets and decodes them. It takes the receivi
 
 ### 4.3 Live Demo:
 
-[Link to the demonstration](https://uofi.app.box.com/file/1531840285404)
+[Link to the demonstration](https://drive.google.com/file/d/1JDo-7zQIANoM4bU2WbyZQOfpoQ1DCMys/view?usp=sharing)
 
 ### 4.4 Project Breakdown:
 
